@@ -33,6 +33,12 @@ __TARGET_SUBSTITUTIONS = {
     "sp.Indexed": "sympy.tensor.indexed.Indexed",
     "sp.IndexedBase": "sympy.tensor.indexed.IndexedBase",
     "sp.Symbol": "sympy.core.symbol.Symbol",
+    "sympy.Basic": "sympy.core.basic.Basic",
+    "sympy.Expr": "sympy.core.expr.Expr",
+    "sympy.Float": "sympy.core.numbers.Float",
+    "sympy.Indexed": "sympy.tensor.indexed.Indexed",
+    "sympy.IndexedBase": "sympy.tensor.indexed.IndexedBase",
+    "sympy.Symbol": "sympy.core.symbol.Symbol",
     "sympy.printing.numpy.NumPyPrinter": "sympy.printing.printer.Printer",
     "typing_extensions.Protocol": "typing.Protocol",
 }

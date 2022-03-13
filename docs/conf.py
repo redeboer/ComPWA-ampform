@@ -7,8 +7,6 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
 import re
-import shutil
-import subprocess
 import sys
 
 import requests
@@ -78,22 +76,20 @@ from _relink_references import relink_references  # noqa: E402
 extend_docstrings()
 relink_references()
 
-shutil.rmtree("api", ignore_errors=True)
-subprocess.call(
-    " ".join(
-        [
-            "sphinx-apidoc",
-            f"../src/{PACKAGE}/",
-            f"../src/{PACKAGE}/version.py",
-            "-o api/",
-            "--force",
-            "--no-toc",
-            "--templatedir _templates",
-            "--separate",
-        ]
-    ),
-    shell=True,
-)
+autoapi_add_toctree_entry = False
+autoapi_dirs = [
+    "../src/ampform",
+]
+autoapi_generate_api_docs = True
+autoapi_keep_files = False
+autoapi_options = [
+    "members",
+    "show-inheritance",
+    "undoc-members",
+]
+autoapi_root = "api"
+autoapi_template_dir = "_templates"
+autoapi_type = "python"
 
 # -- General configuration ---------------------------------------------------
 master_doc = "index.md"
@@ -110,8 +106,8 @@ modindex_common_prefix = [
 ]
 
 extensions = [
+    "autoapi.extension",
     "myst_nb",
-    "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
@@ -130,47 +126,13 @@ extensions = [
 exclude_patterns = [
     "**.ipynb_checkpoints",
     "*build",
-    "adr/template.md",
+    "_templates",
     "tests",
 ]
 
 # General sphinx settings
 add_module_names = False
-autodoc_default_options = {
-    "exclude-members": ", ".join(
-        [
-            "as_explicit",
-            "default_assumptions",
-            "doit",
-            "evaluate",
-            "is_commutative",
-            "is_extended_real",
-            "items",
-            "keys",
-            "precedence",
-            "values",
-        ]
-    ),
-    "members": True,
-    "undoc-members": True,
-    "show-inheritance": True,
-    "special-members": ", ".join(
-        [
-            "__call__",
-        ]
-    ),
-}
-autodoc_member_order = "bysource"
-autodoc_type_aliases = {
-    "BuilderReturnType": "ampform.dynamics.builder.BuilderReturnType",
-    "FourMomenta": "ampform.kinematics.FourMomenta",
-    "FourMomentumSymbol": "ampform.kinematics.FourMomentumSymbol",
-    "RangeDefinition": "symplot.RangeDefinition",
-    # https://github.com/sphinx-doc/sphinx/pull/10183
-    # "ParameterValue": "ampform.helicity.ParameterValue",
-    # "Slider": "symplot.Slider",
-}
-autodoc_typehints_format = "short"
+codeautolink_autodoc_inject = True
 codeautolink_concat_default = True
 codeautolink_global_preface = """
 import numpy

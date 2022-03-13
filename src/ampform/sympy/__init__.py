@@ -38,9 +38,9 @@ class UnevaluatedExpression(sp.Expr):
         import sympy as sp
         from ampform.sympy import UnevaluatedExpression, create_expression
 
-    .. automethod:: __new__
-    .. automethod:: evaluate
-    .. automethod:: _latex
+    .. autoapimethod:: __new__
+    .. autoapimethod:: evaluate
+    .. autoapimethod:: _latex
     """
 
     # https://github.com/sympy/sympy/blob/1.8/sympy/core/basic.py#L74-L77
@@ -166,7 +166,7 @@ class NumPyPrintable(sp.Expr):
         class, which takes :math:`\beta` as input instead of the
         `.FourMomentumSymbol` from which :math:`\beta` is computed.
 
-    .. automethod:: _numpycode
+    .. autoapimethod:: _numpycode
     """
 
     @abstractmethod

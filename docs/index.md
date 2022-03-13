@@ -54,7 +54,7 @@ model with some formalism, like the helicity formalism.
   provides tools to generate toy Monte Carlo data samples.
 
 - **Use your favorite Python packages**<br> All this functionality is offered
-  in an open and transparent style (see {doc}`API </api/ampform>`), so that you
+  in an open and transparent style (see {doc}`API <api/ampform>`), so that you
   can navigate AmpForm's output and feed it to whatever other Python packages
   come in handy for you. For instance, check out {doc}`/usage/interactive` to
   see how to inspect your model with an interactive widget.
@@ -74,7 +74,7 @@ maxdepth: 3
 install
 usage
 references
-API <api/ampform>
+API <api/ampform/index>
 Changelog <https://github.com/ComPWA/ampform/releases>
 Upcoming features <https://github.com/ComPWA/ampform/milestones?direction=asc&sort=title&state=open>
 Help developing <https://compwa-org.rtfd.io/en/stable/develop.html>

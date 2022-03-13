@@ -293,8 +293,8 @@ class ParameterValues(abc.Mapping):
     >>> parameters[c]
     3.14
 
-    .. automethod:: __getitem__
-    .. automethod:: __setitem__
+    .. autoapimethod:: __getitem__
+    .. autoapimethod:: __setitem__
     """
 
     def __init__(self, parameters: Mapping[sp.Symbol, ParameterValue]) -> None:
