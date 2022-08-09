@@ -44,7 +44,7 @@ class TestHelicityAmplitudeBuilder:
             n_kinematic_variables -= len(stable_final_state_ids)
 
         model_builder: HelicityAmplitudeBuilder = get_builder(reaction)
-        model_builder.config.stable_final_state_ids = stable_final_state_ids
+        model_builder.adapter.stable_final_state_ids = stable_final_state_ids
         if permutate_topologies:
             model_builder.adapter.permutate_registered_topologies()
             n_kinematic_variables += 10
@@ -93,20 +93,20 @@ class TestHelicityAmplitudeBuilder:
 
     def test_stable_final_state_ids(self, reaction: ReactionInfo):
         builder: HelicityAmplitudeBuilder = get_builder(reaction)
-        assert builder.config.stable_final_state_ids is None
-        builder.config.stable_final_state_ids = (1, 2)  # type: ignore[assignment]
-        assert builder.config.stable_final_state_ids == {1, 2}
+        assert builder.adapter.stable_final_state_ids is None
+        builder.adapter.stable_final_state_ids = (1, 2)  # type: ignore[assignment]
+        assert builder.adapter.stable_final_state_ids == {1, 2}
 
     def test_scalar_initial_state(self, reaction: ReactionInfo):
         builder: HelicityAmplitudeBuilder = get_builder(reaction)
-        assert builder.config.scalar_initial_state_mass is False
+        assert builder.adapter.scalar_initial_state_mass is False
         initial_state_mass = sp.Symbol("m_012", nonnegative=True)
 
         model = builder.formulate()
         assert initial_state_mass in model.kinematic_variables
         assert initial_state_mass not in model.parameter_defaults
 
-        builder.config.scalar_initial_state_mass = True
+        builder.adapter.scalar_initial_state_mass = True
         model = builder.formulate()
         assert initial_state_mass not in model.kinematic_variables
         assert initial_state_mass in model.parameter_defaults

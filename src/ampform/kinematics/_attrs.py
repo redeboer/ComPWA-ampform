@@ -38,3 +38,9 @@ def _(obj: Topology) -> Topology:
 @get_topology.register(StateTransition)
 def _(obj: StateTransition) -> Topology:
     return obj.topology
+
+
+def to_optional_set(values: Iterable[int] | None) -> set[int] | None:
+    if values is None:
+        return None
+    return set(values)

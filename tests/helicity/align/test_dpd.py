@@ -37,8 +37,8 @@ class TestDalitzPlotDecomposition:
     ):
         builder = ampform.get_builder(jpsi_to_k0_sigma_pbar)
         builder.config.spin_alignment = DalitzPlotDecomposition(reference_subsystem=1)
-        builder.config.scalar_initial_state_mass = scalar_initial_state_mass
-        builder.config.stable_final_state_ids = stable_final_state_ids
+        builder.adapter.scalar_initial_state_mass = scalar_initial_state_mass
+        builder.adapter.stable_final_state_ids = stable_final_state_ids
         model = builder.formulate()
 
         for expr in model.kinematic_variables.values():

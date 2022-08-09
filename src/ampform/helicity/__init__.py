@@ -28,7 +28,7 @@ from typing import (
 import attrs
 import sympy as sp
 from attrs import define, field, frozen
-from attrs.validators import deep_iterable, instance_of, optional
+from attrs.validators import instance_of
 from qrules.combinatorics import perform_external_edge_identical_particle_combinatorics
 from qrules.particle import Particle
 from qrules.transition import ReactionInfo, StateTransition
@@ -335,8 +335,6 @@ class HelicityAmplitudeBuilder:  # pylint: disable=too-many-instance-attributes
         self.__adapter = HelicityAdapter(reaction)
         self.__config = BuilderConfiguration(
             spin_alignment=NoAlignment(),
-            scalar_initial_state_mass=False,
-            stable_final_state_ids=None,
             use_helicity_couplings=False,
         )
         self.__dynamics = DynamicsSelector(reaction)
@@ -368,13 +366,13 @@ class HelicityAmplitudeBuilder:  # pylint: disable=too-many-instance-attributes
         self.__ingredients.reset()
         main_intensity = self.__formulate_top_expression()
         kinematic_variables = self.adapter.create_expressions()
-        if self.config.stable_final_state_ids is not None:
-            for state_id in self.config.stable_final_state_ids:
+        if self.adapter.stable_final_state_ids is not None:
+            for state_id in self.adapter.stable_final_state_ids:
                 mass_symbol = sp.Symbol(f"m_{state_id}", nonnegative=True)
                 particle = self.reaction.final_state[state_id]
                 self.__ingredients.parameter_defaults[mass_symbol] = particle.mass
                 del kinematic_variables[mass_symbol]
-        if self.config.scalar_initial_state_mass:
+        if self.adapter.scalar_initial_state_mass:
             subscript = "".join(map(str, sorted(self.reaction.final_state)))
             mass_symbol = sp.Symbol(f"m_{subscript}", nonnegative=True)
             particle = next(iter(self.reaction.initial_state.values()))
@@ -395,7 +393,7 @@ class HelicityAmplitudeBuilder:  # pylint: disable=too-many-instance-attributes
             for mass_symbol in remaining_mass_symbols:
                 indices = _get_final_state_ids(mass_symbol)
                 if set(indices) == set(self.reaction.initial_state):
-                    if self.config.scalar_initial_state_mass:
+                    if self.adapter.scalar_initial_state_mass:
                         self.__ingredients.parameter_defaults[
                             mass_symbol
                         ] = self.reaction.initial_state[0].mass
@@ -403,8 +401,8 @@ class HelicityAmplitudeBuilder:  # pylint: disable=too-many-instance-attributes
                     indices = tuple(sorted(self.reaction.final_state))
                 if (
                     len(indices) == 1
-                    and self.config.stable_final_state_ids is not None
-                    and indices[0] in self.config.stable_final_state_ids
+                    and self.adapter.stable_final_state_ids is not None
+                    and indices[0] in self.adapter.stable_final_state_ids
                 ):
                     continue
                 momentum = ArraySum(*[p[i] for i in sorted(indices)])
@@ -586,40 +584,12 @@ class CanonicalAmplitudeBuilder(HelicityAmplitudeBuilder):
         return cg_coefficients * amplitude
 
 
-def _to_optional_set(values: Iterable[int] | None) -> set[int] | None:
-    if values is None:
-        return None
-    return set(values)
-
-
 @define
 class BuilderConfiguration:
     """Configuration class for a `.HelicityAmplitudeBuilder`."""
 
     spin_alignment: SpinAlignment = field(validator=instance_of(SpinAlignment))  # type: ignore[misc]
     """Method for :doc:`aligning spin </usage/helicity/spin-alignment>`."""
-    scalar_initial_state_mass: bool = field(validator=instance_of(bool))
-    r"""Add initial state mass as scalar value to `.parameter_defaults`.
-
-    Put the invariant of the initial state (:math:`m_{012\dots}`) under
-    `.HelicityModel.parameter_defaults` (with a *scalar* suggested value) instead of
-    `~.HelicityModel.kinematic_variables`. This is useful if four-momenta were generated
-    with or kinematically fit to a specific initial state energy.
-
-    .. seealso:: :ref:`usage/amplitude:Scalar masses`
-    """
-    stable_final_state_ids: set[int] | None = field(
-        converter=_to_optional_set,
-        validator=optional(deep_iterable(member_validator=instance_of(int))),  # type: ignore[arg-type]
-    )
-    r"""IDs of the final states that should be considered stable.
-
-    Put final state 'invariant' masses (:math:`m_0, m_1, \dots`) under
-    `.HelicityModel.parameter_defaults` (with a *scalar* suggested value) instead of
-    `~.HelicityModel.kinematic_variables` (which are expressions to compute an
-    event-wise array of invariant masses). This is useful if final state particles are
-    stable.
-    """
     use_helicity_couplings: bool = field(validator=instance_of(bool))
     """Use helicity couplings instead of amplitude coefficients.
 

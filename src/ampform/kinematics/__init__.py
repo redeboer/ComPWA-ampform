@@ -12,12 +12,13 @@ import itertools
 import attrs
 import sympy as sp
 from attrs import define, field
+from attrs.validators import deep_iterable, instance_of, optional
 from qrules.topology import Topology
 from qrules.transition import StateTransition
 
 from ampform.helicity.decay import assert_isobar_topology
 
-from ._attrs import extract_topologies, get_topology
+from ._attrs import extract_topologies, get_topology, to_optional_set
 from .angles import compute_helicity_angles
 from .lorentz import compute_invariant_masses, create_four_momentum_symbols
 
@@ -34,6 +35,29 @@ class HelicityAdapter:
     """
 
     topologies: set[Topology] = field(converter=extract_topologies)  # type:ignore[misc]
+    scalar_initial_state_mass: bool = field(default=False, validator=instance_of(bool))
+    r"""Add initial state mass as scalar value to `.parameter_defaults`.
+
+    Put the invariant of the initial state (:math:`m_{012\dots}`) under
+    `.HelicityModel.parameter_defaults` (with a *scalar* suggested value) instead of
+    `~.HelicityModel.kinematic_variables`. This is useful if four-momenta were generated
+    with or kinematically fit to a specific initial state energy.
+
+    .. seealso:: :ref:`usage/amplitude:Scalar masses`
+    """
+    stable_final_state_ids: set[int] | None = field(
+        converter=to_optional_set,
+        default=None,
+        validator=optional(deep_iterable(member_validator=instance_of(int))),  # type: ignore[arg-type]
+    )
+    r"""IDs of the final states that should be considered stable.
+
+    Put final state 'invariant' masses (:math:`m_0, m_1, \dots`) under
+    `.HelicityModel.parameter_defaults` (with a *scalar* suggested value) instead of
+    `~.HelicityModel.kinematic_variables` (which are expressions to compute an
+    event-wise array of invariant masses). This is useful if final state particles are
+    stable.
+    """
 
     def __attrs_post_init__(self) -> None:
         for topology in self.topologies:
