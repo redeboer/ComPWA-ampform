@@ -322,7 +322,7 @@ ParameterValue = Union[float, complex, int]
 """Allowed value types for parameters."""
 
 
-class HelicityAmplitudeBuilder:  # pylint: disable=too-many-instance-attributes
+class HelicityAmplitudeBuilder:
     """Amplitude model generator for the helicity formalism."""
 
     def __init__(self, reaction: ReactionInfo) -> None:
