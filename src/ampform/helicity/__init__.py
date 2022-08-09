@@ -9,10 +9,8 @@ from __future__ import annotations
 
 import collections
 import logging
-import operator
 import sys
 from collections import OrderedDict, abc
-from functools import reduce
 from typing import (
     TYPE_CHECKING,
     ItemsView,
@@ -463,32 +461,35 @@ class HelicityAmplitudeBuilder:
         return expression
 
     def __formulate_sequential_decay(self, transition: StateTransition) -> sp.Expr:
-        partial_decays: list[sp.Expr] = [
+        partial_decays = [
             self._formulate_partial_decay(transition, node_id)
             for node_id in transition.topology.nodes
         ]
-        sequential_amplitudes = reduce(operator.mul, partial_decays)
+        amplitude_product = sp.Mul(*partial_decays)
 
         if self.config.use_helicity_couplings:
-            expression = sequential_amplitudes
+            helicity_couplings = [
+                self.__generate_helicity_coupling(transition, node_id)
+                for node_id in sorted(transition.topology.nodes)
+            ]
+            coefficient = sp.Mul(*helicity_couplings)
         else:
             coefficient = self.__generate_amplitude_coefficient(transition)
-            expression = coefficient * sequential_amplitudes
+        sequential_amplitude = coefficient * amplitude_product
+
         prefactor = self.__generate_amplitude_prefactor(transition)
         if prefactor is not None:
-            expression *= prefactor
+            sequential_amplitude *= prefactor
+
         subscript = self.naming.generate_amplitude_name(transition)
-        self.__ingredients.components[f"A_{{{subscript}}}"] = expression
-        return expression
+        self.__ingredients.components[f"A_{{{subscript}}}"] = sequential_amplitude
+        return sequential_amplitude
 
     def _formulate_partial_decay(
         self, transition: StateTransition, node_id: int
     ) -> sp.Expr:
         wigner_d = formulate_isobar_wigner_d(transition, node_id)
         dynamics = self.__formulate_dynamics(transition, node_id)
-        if self.config.use_helicity_couplings:
-            coupling = self.__generate_helicity_coupling(transition, node_id)
-            return coupling * wigner_d * dynamics
         return wigner_d * dynamics
 
     def __formulate_dynamics(
