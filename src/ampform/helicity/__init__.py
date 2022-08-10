@@ -489,31 +489,9 @@ class HelicityAmplitudeBuilder:
         self, transition: StateTransition, node_id: int
     ) -> sp.Expr:
         wigner_d = formulate_isobar_wigner_d(transition, node_id)
-        dynamics = self.__formulate_dynamics(transition, node_id)
+        dynamics, parameters = _formulate_dynamics(self.dynamics, transition, node_id)
+        self.__ingredients.parameter_defaults.update(parameters)
         return wigner_d * dynamics
-
-    def __formulate_dynamics(
-        self, transition: StateTransition, node_id: int
-    ) -> sp.Expr:
-        decay = TwoBodyDecay.from_transition(transition, node_id)
-        if decay not in self.dynamics:
-            return sp.S.One
-
-        builder = self.dynamics[decay]
-        variable_set = _generate_kinematic_variable_set(transition, node_id)
-        expression, parameters = builder(decay.parent.particle, variable_set)
-        for par, value in parameters.items():
-            if par in self.__ingredients.parameter_defaults:
-                previous_value = self.__ingredients.parameter_defaults[par]
-                if value != previous_value:
-                    _LOGGER.warning(
-                        f'New default value {value} for parameter "{par.name}"'
-                        " is inconsistent with existing value"
-                        f" {previous_value}"
-                    )
-            self.__ingredients.parameter_defaults[par] = value
-
-        return expression
 
     def __generate_amplitude_coefficient(
         self, transition: StateTransition
@@ -718,6 +696,18 @@ class _HelicityModelIngredients:
         self.amplitudes = {}
         self.components = {}
         self.kinematic_variables = {}
+
+
+def _formulate_dynamics(
+    dynamics_selector: DynamicsSelector, transition: StateTransition, node_id: int
+) -> tuple[sp.Expr, dict[sp.Symbol, ParameterValue]]:
+    decay = TwoBodyDecay.from_transition(transition, node_id)
+    if decay not in dynamics_selector:
+        return sp.S.One, {}
+
+    builder = dynamics_selector[decay]
+    variable_set = _generate_kinematic_variable_set(transition, node_id)
+    return builder(decay.parent.particle, variable_set)  # type: ignore[return-value]
 
 
 def formulate_isobar_cg_coefficients(
