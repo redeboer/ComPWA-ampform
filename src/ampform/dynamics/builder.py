@@ -9,6 +9,8 @@ from attrs import field, frozen
 from attrs.validators import instance_of
 from qrules.particle import Particle
 
+from ampform.helicity.model import ParameterValue
+
 from . import (
     EnergyDependentWidth,
     EqualMassPhaseSpaceFactor,
@@ -41,7 +43,7 @@ class TwoBodyKinematicVariableSet:
     angular_momentum: int | None = field(default=None)
 
 
-BuilderReturnType = Tuple[sp.Expr, Dict[sp.Symbol, float]]
+BuilderReturnType = Tuple[sp.Expr, Dict[sp.Symbol, ParameterValue]]
 """Type that a `.ResonanceDynamicsBuilder` should return.
 
 The first element in this `tuple` is the `sympy.Expr <sympy.core.expr.Expr>` that
@@ -162,7 +164,7 @@ class RelativisticBreitWignerBuilder:
             mass0=res_mass,
             gamma0=res_width,
         )
-        parameter_defaults = {
+        parameter_defaults: dict[sp.Symbol, ParameterValue] = {
             res_mass: resonance.mass,
             res_width: resonance.width,
         }
@@ -196,7 +198,7 @@ class RelativisticBreitWignerBuilder:
         breit_wigner_expr = (res_mass * res_width) / (
             res_mass**2 - s - mass_dependent_width * res_mass * sp.I
         )
-        parameter_defaults = {
+        parameter_defaults: dict[sp.Symbol, ParameterValue] = {
             res_mass: resonance.mass,
             res_width: resonance.width,
             meson_radius: 1,

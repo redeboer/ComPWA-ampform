@@ -448,7 +448,7 @@ def _formulate_dynamics(
 
     builder = dynamics_selector[decay]
     variable_set = _generate_kinematic_variable_set(transition, node_id)
-    return builder(decay.parent.particle, variable_set)  # type: ignore[return-value]
+    return builder(decay.parent.particle, variable_set)
 
 
 def formulate_isobar_cg_coefficients(
