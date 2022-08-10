@@ -218,18 +218,19 @@ class HelicityAmplitudeBuilder:
         if self.config.use_helicity_couplings:
             helicity_couplings = []
             for node_id in sorted(transition.topology.nodes):
-                symbol, value = self.__generate_helicity_coupling(transition, node_id)
+                symbol = _generate_helicity_coupling(self.naming, transition, node_id)
                 helicity_couplings.append(symbol)
-                ingredients.parameter_defaults[symbol] = value
-            coefficient = sp.Mul(*helicity_couplings)
+                ingredients.parameter_defaults[symbol] = 1 + 0j
+            coupling_factor = sp.Mul(*helicity_couplings)
         else:
-            coefficient, value = self.__generate_amplitude_coefficient(transition)
-            ingredients.parameter_defaults[coefficient] = value
-        expression = coefficient * amplitude_product
+            symbol = _generate_amplitude_coefficient(self.naming, transition)
+            ingredients.parameter_defaults[symbol] = 1 + 0j
+            coupling_factor = symbol
+        expression = coupling_factor * amplitude_product
 
-        prefactor = self.__generate_amplitude_prefactor(transition)
-        if prefactor is not None:
-            expression *= prefactor
+        parity_prefactor = _generate_amplitude_prefactor(self.naming, transition)
+        if parity_prefactor is not None:
+            expression *= parity_prefactor
 
         subscript = self.naming.generate_amplitude_name(transition)
         ingredients.components[f"A_{{{subscript}}}"] = expression
@@ -243,45 +244,6 @@ class HelicityAmplitudeBuilder:
         expression = wigner_d * dynamics
         ingredients = _HelicityModelIngredients(parameter_defaults=parameters)
         return expression, ingredients
-
-    def __generate_amplitude_coefficient(
-        self, transition: StateTransition
-    ) -> tuple[sp.Symbol, ParameterValue]:
-        """Generate coefficient parameter for a sequential amplitude.
-
-        Generally, each partial amplitude of a sequential amplitude transition should
-        check itself if it or a parity partner is already defined. If so a coupled
-        coefficient is introduced.
-        """
-        suffix = self.naming.generate_sequential_amplitude_suffix(transition)
-        symbol = sp.Symbol(f"C_{{{suffix}}}")
-        value = complex(1, 0)
-        return symbol, value
-
-    def __generate_helicity_coupling(
-        self, transition: StateTransition, node_id: int
-    ) -> tuple[sp.Symbol, ParameterValue]:
-        suffix = self.naming.generate_two_body_decay_suffix(transition, node_id)
-        symbol = sp.Symbol(f"H_{{{suffix}}}")
-        value = complex(1, 0)
-        return symbol, value
-
-    def __generate_amplitude_prefactor(
-        self, transition: StateTransition
-    ) -> sp.Rational | None:
-        prefactor = get_prefactor(transition)
-        if prefactor != 1.0:
-            for node_id in transition.topology.nodes:
-                raw_suffix = self.naming.generate_two_body_decay_suffix(
-                    transition, node_id
-                )
-                if raw_suffix in self.naming.parity_partner_coefficient_mapping:
-                    coefficient_suffix = self.naming.parity_partner_coefficient_mapping[
-                        raw_suffix
-                    ]
-                    if coefficient_suffix != raw_suffix:
-                        return sp.Rational(prefactor)
-        return None
 
 
 class CanonicalAmplitudeBuilder(HelicityAmplitudeBuilder):
@@ -315,6 +277,42 @@ class CanonicalAmplitudeBuilder(HelicityAmplitudeBuilder):
         expression = cg_coefficients * wigner_d * dynamics
         ingredients = _HelicityModelIngredients(parameter_defaults=parameters)
         return expression, ingredients
+
+
+def _generate_amplitude_coefficient(
+    naming: NameGenerator, transition: StateTransition
+) -> sp.Symbol:
+    """Generate coefficient parameter for a sequential amplitude.
+
+    Generally, each partial amplitude of a sequential amplitude transition should check
+    itself if it or a parity partner is already defined. If so a coupled coefficient is
+    introduced.
+    """
+    suffix = naming.generate_sequential_amplitude_suffix(transition)
+    return sp.Symbol(f"C_{{{suffix}}}")
+
+
+def _generate_helicity_coupling(
+    naming: NameGenerator, transition: StateTransition, node_id: int
+) -> sp.Symbol:
+    suffix = naming.generate_two_body_decay_suffix(transition, node_id)
+    return sp.Symbol(f"H_{{{suffix}}}")
+
+
+def _generate_amplitude_prefactor(
+    naming: NameGenerator, transition: StateTransition
+) -> sp.Rational | None:
+    prefactor = get_prefactor(transition)
+    if prefactor != 1.0:
+        for node_id in transition.topology.nodes:
+            raw_suffix = naming.generate_two_body_decay_suffix(transition, node_id)
+            if raw_suffix in naming.parity_partner_coefficient_mapping:
+                coefficient_suffix = naming.parity_partner_coefficient_mapping[
+                    raw_suffix
+                ]
+                if coefficient_suffix != raw_suffix:
+                    return sp.Rational(prefactor)
+    return None
 
 
 def _to_optional_set(values: Iterable[int] | None) -> set[int] | None:
