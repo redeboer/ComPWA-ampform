@@ -103,7 +103,7 @@ class HelicityAmplitudeBuilder:
 
     def formulate(self) -> HelicityModel:  # noqa: R701
         self._ingredients.reset()
-        main_intensity = self.__formulate_top_expression()
+        total_intensity = self.__formulate_total_intensity()
         kinematic_variables = self.adapter.create_expressions()
         if self.config.stable_final_state_ids is not None:
             for state_id in self.config.stable_final_state_ids:
@@ -151,7 +151,7 @@ class HelicityAmplitudeBuilder:
         kinematic_variables.update(alignment_symbols)
 
         return HelicityModel(
-            intensity=main_intensity,
+            intensity=total_intensity,
             amplitudes=self._ingredients.amplitudes,
             parameter_defaults=self._ingredients.parameter_defaults,
             kinematic_variables=kinematic_variables,
@@ -159,20 +159,22 @@ class HelicityAmplitudeBuilder:
             reaction_info=self.reaction,
         )
 
-    def __formulate_top_expression(self) -> PoolSum:
+    def __formulate_total_intensity(self) -> PoolSum:
         # pylint: disable=too-many-locals
         spin_groups = group_by_spin_projection(self.reaction.transitions)
         for group in spin_groups:
-            self.__register_amplitudes(group)
+            self.__register_subsystem_intensity(group)
 
         amplitude = self.config.spin_alignment.formulate_amplitude(self.reaction)
         spin_projections = collect_spin_projections(self.reaction)
         return PoolSum(abs(amplitude) ** 2, *spin_projections.items())
 
-    def __register_amplitudes(self, transition_group: list[StateTransition]) -> None:
+    def __register_subsystem_intensity(
+        self, transition_group: list[StateTransition]
+    ) -> None:
         transition_by_topology = group_by_topology(transition_group)
         expression = sum(
-            self.__formulate_topology_amplitude(transitions)
+            self.__formulate_subsystem_amplitude(transitions)
             for transitions in transition_by_topology.values()
         )
         first_transition = transition_group[0]
@@ -180,7 +182,7 @@ class HelicityAmplitudeBuilder:
         component_name = f"I_{{{graph_group_label}}}"
         self._ingredients.components[component_name] = abs(expression) ** 2
 
-    def __formulate_topology_amplitude(
+    def __formulate_subsystem_amplitude(
         self, transitions: Sequence[StateTransition]
     ) -> sp.Expr:
         sequential_expressions: list[sp.Expr] = []
@@ -190,7 +192,7 @@ class HelicityAmplitudeBuilder:
             )
             for graph in sequential_graphs:
                 first_transition = StateTransition.from_graph(graph)
-                expression = self.__formulate_sequential_decay(first_transition)
+                expression = self.__formulate_chain_amplitude(first_transition)
                 sequential_expressions.append(expression)
 
         first_transition = transitions[0]
@@ -199,9 +201,9 @@ class HelicityAmplitudeBuilder:
         self._ingredients.amplitudes[symbol] = expression
         return expression
 
-    def __formulate_sequential_decay(self, transition: StateTransition) -> sp.Expr:
+    def __formulate_chain_amplitude(self, transition: StateTransition) -> sp.Expr:
         partial_decays = [
-            self._formulate_partial_decay(transition, node_id)
+            self._formulate_node_amplitude(transition, node_id)
             for node_id in transition.topology.nodes
         ]
         amplitude_product = sp.Mul(*partial_decays)
@@ -224,7 +226,7 @@ class HelicityAmplitudeBuilder:
         self._ingredients.components[f"A_{{{subscript}}}"] = sequential_amplitude
         return sequential_amplitude
 
-    def _formulate_partial_decay(
+    def _formulate_node_amplitude(
         self, transition: StateTransition, node_id: int
     ) -> sp.Expr:
         wigner_d = formulate_isobar_wigner_d(transition, node_id)
@@ -296,7 +298,7 @@ class CanonicalAmplitudeBuilder(HelicityAmplitudeBuilder):
         super().__init__(reaction)
         self._naming = CanonicalAmplitudeNameGenerator(reaction)
 
-    def _formulate_partial_decay(
+    def _formulate_node_amplitude(
         self, transition: StateTransition, node_id: int
     ) -> sp.Expr:
         cg_coefficients = formulate_isobar_cg_coefficients(transition, node_id)
