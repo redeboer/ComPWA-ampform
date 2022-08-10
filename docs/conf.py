@@ -175,7 +175,7 @@ autodoc_type_aliases = {
     "FourMomentumSymbol": "ampform.kinematics.lorentz.FourMomentumSymbol",
     "RangeDefinition": "symplot.RangeDefinition",
     # https://github.com/sphinx-doc/sphinx/pull/10183
-    # "ParameterValue": "ampform.helicity.ParameterValue",
+    # "ParameterValue": "ampform.helicity.model.ParameterValue",
     # "Slider": "symplot.Slider",
 }
 autodoc_typehints_format = "short"
