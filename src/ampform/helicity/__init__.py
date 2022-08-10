@@ -1,4 +1,4 @@
-# pylint: disable=import-outside-toplevel line-too-long
+# pylint: disable=import-outside-toplevel
 """Generate an amplitude model with the helicity formalism.
 
 .. autolink-preface::

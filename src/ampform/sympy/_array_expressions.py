@@ -1,5 +1,5 @@
 # cspell:ignore sympified
-# pylint: disable=arguments-differ, line-too-long, protected-access
+# pylint: disable=arguments-differ, protected-access
 # pylint: disable=singleton-comparison, unused-argument, W0223
 # https://stackoverflow.com/a/22224042
 """Temporary module for SymPy :code:`ArraySlice` and related classes.
