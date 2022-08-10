@@ -339,7 +339,7 @@ class HelicityAmplitudeBuilder:
         )
         self.__dynamics = DynamicsSelector(reaction)
         self._naming: NameGenerator = HelicityAmplitudeNameGenerator(reaction)
-        self.__ingredients = _HelicityModelIngredients()
+        self._ingredients = _HelicityModelIngredients()
 
     @property
     def adapter(self) -> HelicityAdapter:
@@ -363,20 +363,20 @@ class HelicityAmplitudeBuilder:
         return self.__reaction
 
     def formulate(self) -> HelicityModel:  # noqa: R701
-        self.__ingredients.reset()
+        self._ingredients.reset()
         main_intensity = self.__formulate_top_expression()
         kinematic_variables = self.adapter.create_expressions()
         if self.config.stable_final_state_ids is not None:
             for state_id in self.config.stable_final_state_ids:
                 mass_symbol = sp.Symbol(f"m_{state_id}", nonnegative=True)
                 particle = self.reaction.final_state[state_id]
-                self.__ingredients.parameter_defaults[mass_symbol] = particle.mass
+                self._ingredients.parameter_defaults[mass_symbol] = particle.mass
                 del kinematic_variables[mass_symbol]
         if self.config.scalar_initial_state_mass:
             subscript = "".join(map(str, sorted(self.reaction.final_state)))
             mass_symbol = sp.Symbol(f"m_{subscript}", nonnegative=True)
             particle = next(iter(self.reaction.initial_state.values()))
-            self.__ingredients.parameter_defaults[mass_symbol] = particle.mass
+            self._ingredients.parameter_defaults[mass_symbol] = particle.mass
             del kinematic_variables[mass_symbol]
 
         alignment_symbols = self.config.spin_alignment.define_symbols(self.reaction)
@@ -394,7 +394,7 @@ class HelicityAmplitudeBuilder:
                 indices = _get_final_state_ids(mass_symbol)
                 if set(indices) == set(self.reaction.initial_state):
                     if self.config.scalar_initial_state_mass:
-                        self.__ingredients.parameter_defaults[
+                        self._ingredients.parameter_defaults[
                             mass_symbol
                         ] = self.reaction.initial_state[0].mass
                         continue
@@ -413,10 +413,10 @@ class HelicityAmplitudeBuilder:
 
         return HelicityModel(
             intensity=main_intensity,
-            amplitudes=self.__ingredients.amplitudes,
-            parameter_defaults=self.__ingredients.parameter_defaults,
+            amplitudes=self._ingredients.amplitudes,
+            parameter_defaults=self._ingredients.parameter_defaults,
             kinematic_variables=kinematic_variables,
-            components=self.__ingredients.components,
+            components=self._ingredients.components,
             reaction_info=self.reaction,
         )
 
@@ -439,7 +439,7 @@ class HelicityAmplitudeBuilder:
         first_transition = transition_group[0]
         graph_group_label = generate_transition_label(first_transition)
         component_name = f"I_{{{graph_group_label}}}"
-        self.__ingredients.components[component_name] = abs(expression) ** 2
+        self._ingredients.components[component_name] = abs(expression) ** 2
 
     def __formulate_topology_amplitude(
         self, transitions: Sequence[StateTransition]
@@ -457,7 +457,7 @@ class HelicityAmplitudeBuilder:
         first_transition = transitions[0]
         symbol = create_amplitude_symbol(first_transition)
         expression = sum(sequential_expressions)  # type: ignore[assignment]
-        self.__ingredients.amplitudes[symbol] = expression
+        self._ingredients.amplitudes[symbol] = expression
         return expression
 
     def __formulate_sequential_decay(self, transition: StateTransition) -> sp.Expr:
@@ -482,7 +482,7 @@ class HelicityAmplitudeBuilder:
             sequential_amplitude *= prefactor
 
         subscript = self.naming.generate_amplitude_name(transition)
-        self.__ingredients.components[f"A_{{{subscript}}}"] = sequential_amplitude
+        self._ingredients.components[f"A_{{{subscript}}}"] = sequential_amplitude
         return sequential_amplitude
 
     def _formulate_partial_decay(
@@ -490,7 +490,7 @@ class HelicityAmplitudeBuilder:
     ) -> sp.Expr:
         wigner_d = formulate_isobar_wigner_d(transition, node_id)
         dynamics, parameters = _formulate_dynamics(self.dynamics, transition, node_id)
-        self.__ingredients.parameter_defaults.update(parameters)
+        self._ingredients.parameter_defaults.update(parameters)
         return wigner_d * dynamics
 
     def __generate_amplitude_coefficient(
@@ -505,7 +505,7 @@ class HelicityAmplitudeBuilder:
         suffix = self.naming.generate_sequential_amplitude_suffix(transition)
         symbol = sp.Symbol(f"C_{{{suffix}}}")
         value = complex(1, 0)
-        self.__ingredients.parameter_defaults[symbol] = value
+        self._ingredients.parameter_defaults[symbol] = value
         return symbol
 
     def __generate_helicity_coupling(
@@ -514,7 +514,7 @@ class HelicityAmplitudeBuilder:
         suffix = self.naming.generate_two_body_decay_suffix(transition, node_id)
         symbol = sp.Symbol(f"H_{{{suffix}}}")
         value = complex(1, 0)
-        self.__ingredients.parameter_defaults[symbol] = value
+        self._ingredients.parameter_defaults[symbol] = value
         return symbol
 
     def __generate_amplitude_prefactor(
@@ -560,9 +560,11 @@ class CanonicalAmplitudeBuilder(HelicityAmplitudeBuilder):
     def _formulate_partial_decay(
         self, transition: StateTransition, node_id: int
     ) -> sp.Expr:
-        amplitude = super()._formulate_partial_decay(transition, node_id)
         cg_coefficients = formulate_isobar_cg_coefficients(transition, node_id)
-        return cg_coefficients * amplitude
+        wigner_d = formulate_isobar_wigner_d(transition, node_id)
+        dynamics, parameters = _formulate_dynamics(self.dynamics, transition, node_id)
+        self._ingredients.parameter_defaults.update(parameters)
+        return cg_coefficients * wigner_d * dynamics
 
 
 def _to_optional_set(values: Iterable[int] | None) -> set[int] | None:
