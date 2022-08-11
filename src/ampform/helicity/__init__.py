@@ -215,17 +215,10 @@ class HelicityAmplitudeBuilder:
             partial_decay_exprs.append(expr)
         amplitude_product = sp.Mul(*partial_decay_exprs)
 
-        if self.config.use_helicity_couplings:
-            helicity_couplings = []
-            for node_id in sorted(transition.topology.nodes):
-                symbol = _generate_helicity_coupling(self.naming, transition, node_id)
-                helicity_couplings.append(symbol)
-                ingredients.parameter_defaults[symbol] = 1 + 0j
-            coupling_factor = sp.Mul(*helicity_couplings)
-        else:
-            symbol = _generate_amplitude_coefficient(self.naming, transition)
-            ingredients.parameter_defaults[symbol] = 1 + 0j
-            coupling_factor = symbol
+        coupling_factor, new_ingredients = _generate_coupling_factor(
+            self.naming, transition, self.config.use_helicity_couplings
+        )
+        ingredients.update(new_ingredients)
         expression = coupling_factor * amplitude_product
 
         parity_prefactor = _generate_amplitude_prefactor(self.naming, transition)
@@ -279,7 +272,25 @@ class CanonicalAmplitudeBuilder(HelicityAmplitudeBuilder):
         return expression, ingredients
 
 
-def _generate_amplitude_coefficient(
+def _generate_coupling_factor(
+    naming: NameGenerator, transition: StateTransition, use_helicity_couplings: bool
+) -> tuple[sp.Expr, _HelicityModelIngredients]:
+    ingredients = _HelicityModelIngredients()
+    if use_helicity_couplings:
+        helicity_couplings = []
+        for node_id in transition.topology.nodes:
+            symbol = __generate_helicity_coupling(naming, transition, node_id)
+            helicity_couplings.append(symbol)
+            ingredients.parameter_defaults[symbol] = 1 + 0j
+        expression = sp.Mul(*helicity_couplings)
+    else:
+        symbol = __generate_amplitude_coefficient(naming, transition)
+        ingredients.parameter_defaults[symbol] = 1 + 0j
+        expression = symbol
+    return expression, ingredients
+
+
+def __generate_amplitude_coefficient(
     naming: NameGenerator, transition: StateTransition
 ) -> sp.Symbol:
     """Generate coefficient parameter for a sequential amplitude.
@@ -292,7 +303,7 @@ def _generate_amplitude_coefficient(
     return sp.Symbol(f"C_{{{suffix}}}")
 
 
-def _generate_helicity_coupling(
+def __generate_helicity_coupling(
     naming: NameGenerator, transition: StateTransition, node_id: int
 ) -> sp.Symbol:
     suffix = naming.generate_two_body_decay_suffix(transition, node_id)
