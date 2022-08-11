@@ -6,7 +6,7 @@ from _pytest.fixtures import SubRequest
 from qrules.transition import ReactionInfo
 
 import ampform
-from ampform.helicity.align.dpd import (
+from ampform.helicity.formalism.dpd import (
     DalitzPlotDecomposition,
     _collect_outer_state_helicities,
     relabel_edge_ids,

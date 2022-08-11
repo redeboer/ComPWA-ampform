@@ -33,13 +33,13 @@ from ampform.kinematics.lorentz import (
 from ampform.sympy import PoolSum, determine_indices
 from ampform.sympy._array_expressions import ArraySum
 
-from .align import NoAlignment, SpinAlignment
 from .decay import (
     TwoBodyDecay,
     get_prefactor,
     group_by_spin_projection,
     group_by_topology,
 )
+from .formalism import NoAlignment, SpinAlignment
 from .model import HelicityModel, ParameterValue
 from .naming import (
     CanonicalAmplitudeNameGenerator,
