@@ -357,10 +357,10 @@ class _BoostZMatrixImplementation(NumPyPrintable):
         _, gamma, gamma_beta, ones, zeros = map(printer._print, self.args)
         return f"""array(
             [
-                [{gamma}, {zeros}, {zeros}, -{gamma_beta}],
+                [{gamma}, {zeros}, {zeros}, {gamma_beta}],
                 [{zeros}, {ones}, {zeros}, {zeros}],
                 [{zeros}, {zeros}, {ones}, {zeros}],
-                [-{gamma_beta}, {zeros}, {zeros}, {gamma}],
+                [{gamma_beta}, {zeros}, {zeros}, {gamma}],
             ]
         ).transpose((2, 0, 1))"""
 

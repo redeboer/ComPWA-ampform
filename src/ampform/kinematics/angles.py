@@ -148,7 +148,7 @@ def compute_helicity_angles(
                     beta = p3_norm / Energy(four_momentum)
                     new_momentum_pool: dict[int, sp.Expr] = {
                         k: ArrayMultiplication(
-                            BoostZMatrix(beta, n_events),
+                            BoostZMatrix(-beta, n_events),
                             RotationYMatrix(-theta_expr, n_events),
                             RotationZMatrix(-phi_expr, n_events),
                             p,

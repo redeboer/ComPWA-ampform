@@ -49,10 +49,10 @@ class TestBoostMatrix:
         matrix = func(p_array)[0]
         assert pytest.approx(matrix) == np.array(
             [
-                [1.02062073, 0, 0, -0.20412415],
+                [1.02062073, 0, 0, 0.20412415],
                 [0, 1, 0, 0],
                 [0, 0, 1, 0],
-                [-0.20412415, 0, 0, 1.02062073],
+                [0.20412415, 0, 0, 1.02062073],
             ]
         )
 
@@ -137,10 +137,10 @@ class TestBoostZMatrix:
             x3 = zeros(x1)
             return (einsum("...ij,...jk,...kl,...l->...i", array(
                     [
-                        [x0, x3, x3, -beta*x0],
+                        [x0, x3, x3, beta*x0],
                         [x3, x2, x3, x3],
                         [x3, x3, x2, x3],
-                        [-beta*x0, x3, x3, x0],
+                        [beta*x0, x3, x3, x0],
                     ]
                 ).transpose((2, 0, 1)), array(
                     [
