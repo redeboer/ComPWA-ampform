@@ -193,6 +193,7 @@ class TestFourMomentumXYZ:
 
 
 class TestInvariantMass:
+    @pytest.mark.parametrize("use_complex_sqrt", [False, True])
     @pytest.mark.parametrize(
         ("state_id", "expected_mass"),
         [
@@ -207,14 +208,18 @@ class TestInvariantMass:
         data_sample: dict[int, np.ndarray],
         state_id: int,
         expected_mass: float,
+        use_complex_sqrt: bool,
     ):
         p = FourMomentumSymbol(f"p{state_id}", shape=[])
-        mass = InvariantMass(p)
+        mass = InvariantMass(p, use_complex_sqrt)
         np_mass = sp.lambdify(p, mass.doit(), cse=True)
         four_momenta = data_sample[state_id]
         computed_values = np_mass(four_momenta)
         average_mass = np.average(computed_values)
-        assert pytest.approx(average_mass, abs=1e-5) == expected_mass
+        if not use_complex_sqrt and state_id == 1:
+            assert np.isnan(average_mass)
+        else:
+            assert pytest.approx(average_mass, abs=1e-5) == expected_mass
 
 
 class TestThreeMomentum:

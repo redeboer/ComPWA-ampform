@@ -6,6 +6,7 @@ from typing import Dict
 
 import sympy as sp
 from qrules.topology import Topology
+from sympy.logic.boolalg import Boolean
 from sympy.printing.latex import LatexPrinter
 from sympy.printing.numpy import NumPyPrinter
 
@@ -213,20 +214,31 @@ def three_momentum_norm(momentum: sp.Basic) -> EuclideanNorm:
 class InvariantMass(UnevaluatedExpression):
     """Invariant mass of a `.FourMomentumSymbol`."""
 
-    def __new__(cls, momentum: sp.Basic, **hints) -> InvariantMass:
-        return create_expression(cls, momentum, **hints)
+    def __new__(
+        cls, momentum: sp.Basic, use_complex_sqrt: bool = True, **hints
+    ) -> InvariantMass:
+        return create_expression(cls, momentum, use_complex_sqrt, **hints)
 
     @property
     def _momentum(self) -> sp.Expr:
         return self.args[0]  # type: ignore[return-value]
 
+    @property
+    def _use_complex_sqrt(self) -> Boolean:
+        return self.args[1]  # type: ignore[return-value]
+
     def evaluate(self) -> ComplexSqrt:
         p = self._momentum
         p_xyz = ThreeMomentum(p)
-        return ComplexSqrt(Energy(p) ** 2 - EuclideanNorm(p_xyz) ** 2)
+        mass_squared = Energy(p) ** 2 - EuclideanNorm(p_xyz) ** 2
+        if self._use_complex_sqrt:
+            return ComplexSqrt(mass_squared)
+        return sp.sqrt(mass_squared)
 
     def _latex(self, printer: LatexPrinter, *args) -> str:
         momentum = printer._print(self._momentum)
+        if self._use_complex_sqrt:
+            return Rf"m^\mathrm{{c}}_{{{momentum}}}"
         return f"m_{{{momentum}}}"
 
 
