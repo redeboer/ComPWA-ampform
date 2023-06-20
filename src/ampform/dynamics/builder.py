@@ -25,7 +25,7 @@ else:  # pragma: no cover
     from typing_extensions import Protocol
 
 if TYPE_CHECKING:
-    from qrules.particle import Particle
+    from ampform.decay import Particle
 
 
 @frozen

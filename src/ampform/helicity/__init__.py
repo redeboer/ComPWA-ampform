@@ -29,9 +29,9 @@ import sympy as sp
 from attrs import define, field, frozen
 from attrs.validators import deep_iterable, instance_of, optional
 from qrules.combinatorics import perform_external_edge_identical_particle_combinatorics
-from qrules.particle import Particle
 from qrules.transition import ReactionInfo, StateTransition
 
+from ampform.decay import Particle
 from ampform.dynamics.builder import (
     ResonanceDynamicsBuilder,
     TwoBodyKinematicVariableSet,
@@ -502,7 +502,7 @@ class HelicityAmplitudeBuilder:
 
         builder = self.dynamics[decay]
         variable_set = _generate_kinematic_variable_set(transition, node_id)
-        expression, parameters = builder(decay.parent.particle, variable_set)
+        expression, parameters = builder(decay.parent.particle, variable_set)  # type: ignore[arg-type]
         for par, value in parameters.items():
             if par in self.__ingredients.parameter_defaults:
                 previous_value = self.__ingredients.parameter_defaults[par]

@@ -1,7 +1,7 @@
 import pytest
 import sympy as sp
-from qrules.particle import Particle
 
+from ampform.decay import Particle
 from ampform.dynamics import EnergyDependentWidth, formulate_form_factor
 from ampform.dynamics.builder import (
     RelativisticBreitWignerBuilder,
