@@ -8,7 +8,6 @@ import qrules
 import sympy as sp
 from qrules import ReactionInfo
 
-from ampform import get_builder
 from ampform.dynamics.builder import create_relativistic_breit_wigner_with_ff
 from ampform.helicity import (
     HelicityAmplitudeBuilder,
@@ -19,6 +18,7 @@ from ampform.helicity import (
     formulate_isobar_wigner_d,
     group_by_spin_projection,
 )
+from ampform.qrules import get_builder
 
 if TYPE_CHECKING:
     from _pytest.logging import LogCaptureFixture

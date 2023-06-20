@@ -9,8 +9,8 @@ import qrules
 from qrules import ParticleCollection, ReactionInfo, load_default_particles
 from qrules.settings import NumberOfThreads
 
-from ampform import get_builder
 from ampform.dynamics.builder import create_relativistic_breit_wigner_with_ff
+from ampform.qrules import get_builder
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest

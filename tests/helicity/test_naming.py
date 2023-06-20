@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from ampform import get_builder
 from ampform.helicity.naming import (
     CanonicalAmplitudeNameGenerator,
     HelicityAmplitudeNameGenerator,
     _render_float,
     generate_transition_label,
 )
+from ampform.qrules import get_builder
 
 if TYPE_CHECKING:
     from qrules import ReactionInfo

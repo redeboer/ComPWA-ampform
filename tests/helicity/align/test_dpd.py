@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 import pytest
 import qrules
 
-import ampform
 from ampform.helicity.align.dpd import (
     DalitzPlotDecomposition,
     _collect_outer_state_helicities,
     relabel_edge_ids,
 )
 from ampform.kinematics.lorentz import create_four_momentum_symbol
+from ampform.qrules import get_builder
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
@@ -39,7 +39,7 @@ class TestDalitzPlotDecomposition:
         scalar_initial_state_mass: bool,
         stable_final_state_ids: set[int] | None,
     ):
-        builder = ampform.get_builder(jpsi_to_k0_sigma_pbar)
+        builder = get_builder(jpsi_to_k0_sigma_pbar)
         builder.config.spin_alignment = DalitzPlotDecomposition(reference_subsystem=1)
         builder.config.scalar_initial_state_mass = scalar_initial_state_mass
         builder.config.stable_final_state_ids = stable_final_state_ids
@@ -57,7 +57,7 @@ class TestDalitzPlotDecomposition:
 
     @pytest.mark.slow()
     def test_free_symbols_main_expression(self, jpsi_to_k0_sigma_pbar: ReactionInfo):
-        builder = ampform.get_builder(jpsi_to_k0_sigma_pbar)
+        builder = get_builder(jpsi_to_k0_sigma_pbar)
         builder.config.spin_alignment = DalitzPlotDecomposition(reference_subsystem=1)
         model = builder.formulate()
         substituted_expr = model.expression

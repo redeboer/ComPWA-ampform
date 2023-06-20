@@ -3,7 +3,7 @@ from typing import NamedTuple
 import pytest
 from qrules import StateTransitionManager
 
-from ampform import get_builder
+from ampform.qrules import get_builder
 
 
 class Input(NamedTuple):

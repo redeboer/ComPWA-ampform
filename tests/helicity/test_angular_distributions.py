@@ -6,9 +6,8 @@ import pytest
 import qrules
 import sympy as sp
 from qrules import ParticleCollection
-from qrules.particle import Particle
 
-from ampform import get_builder
+from ampform.qrules import get_builder
 
 
 def calculate_sympy_integral(
@@ -49,7 +48,7 @@ def normalize(sympy_expression: sp.Expr, variable_names: Sequence[str]) -> sp.Ex
 class TestEpemToDmD0Pip:
     @pytest.fixture(scope="class")
     def sympy_model(self, particle_database: ParticleCollection) -> sp.Expr:
-        epem = Particle(
+        epem = qrules.particle.Particle(
             name="EpEm",
             pid=12345678,
             mass=4.36,
