@@ -128,6 +128,7 @@ pydata-sphinx-theme==0.13.3
 pygments==2.16.1
 pyparsing==3.1.1
 pyproject-api==1.5.3
+pyright==1.1.324
 pyrsistent==0.19.3
 pytest==7.4.0
 pytest-cov==4.1.0
@@ -144,7 +145,7 @@ requests==2.31.0
 rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 rich==13.5.2
-ruff==0.0.285
+ruff==0.0.286
 send2trash==1.8.2
 singledispatchmethod==1.0 ; python_version < "3.8.0"
 six==1.16.0
@@ -161,7 +162,7 @@ sphinx-design==0.4.1
 sphinx-thebe==0.2.1
 sphinx-togglebutton==0.3.2
 sphinxcontrib-applehelp==1.0.2
-sphinxcontrib-bibtex==2.6.0
+sphinxcontrib-bibtex==2.6.1
 sphinxcontrib-devhelp==1.0.2
 sphinxcontrib-hep-pdgref==0.1.4
 sphinxcontrib-htmlhelp==2.0.0

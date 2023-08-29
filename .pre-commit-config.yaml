@@ -150,10 +150,15 @@ repos:
     hooks:
       - id: prettier
 
-  - repo: https://github.com/ComPWA/mirrors-pyright
-    rev: v1.1.324
+  - repo: local
     hooks:
       - id: pyright
+        name: pyright
+        entry: pyright
+        language: system
+        require_serial: true
+        types:
+          - python
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.10.1
