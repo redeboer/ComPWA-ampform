@@ -3,36 +3,83 @@ from __future__ import annotations
 
 import collections
 import sys
-from functools import lru_cache, singledispatch
-from typing import TYPE_CHECKING, Iterable
+from fractions import Fraction
+from functools import lru_cache, singledispatch, total_ordering
+from typing import TYPE_CHECKING, Any, DefaultDict, Iterable
 
-from attrs import frozen
+import attrs
+from attrs import field, frozen
+from attrs.validators import instance_of
+from qrules.quantum_numbers import InteractionProperties
+from qrules.topology import Topology
 from qrules.transition import ReactionInfo, State, StateTransition
 
-if TYPE_CHECKING:
-    from qrules.quantum_numbers import InteractionProperties
-    from qrules.topology import Topology
+from ._attrs import to_float
 
+if TYPE_CHECKING:
+    from IPython.lib.pretty import PrettyPrinter
 if sys.version_info < (3, 8):
     from typing_extensions import Literal
 else:
     from typing import Literal
 
 
-@frozen
-class StateWithID(State):
-    """Extension of `~qrules.transition.State` that embeds the state ID."""
+Parity = Literal[-1, 1]
 
-    id: int  # noqa: A003
 
-    @classmethod
-    def from_transition(cls, transition: StateTransition, state_id: int) -> StateWithID:
-        state = transition.states[state_id]
-        return cls(
-            id=state_id,
-            particle=state.particle,
-            spin_projection=state.spin_projection,
+@total_ordering
+@frozen(kw_only=True, order=False, repr=True)
+class Particle:
+    name: str
+    pid: int
+    latex: str | None = None
+    mass: float = field(converter=float)
+    width: float = field(converter=float, default=0.0)
+    spin: Fraction = field(converter=Fraction)
+    charge: Fraction = field(converter=Fraction, default=Fraction(0))
+    isospin: Fraction | None = None
+    parity: Parity | None = None
+    c_parity: Parity | None = None
+    g_parity: Parity | None = None
+
+    def __gt__(self, other: Any) -> bool:
+        if isinstance(other, Particle):
+            return self.name > other.name
+        raise NotImplementedError(
+            f"Cannot compare {type(self).__name__} with {type(other).__name__}"
         )
+
+    def _repr_pretty_(self, p: PrettyPrinter, cycle: bool) -> None:
+        class_name = type(self).__name__
+        if cycle:
+            p.text(f"{class_name}(...)")
+        else:
+            with p.group(indent=2, open=f"{class_name}("):
+                for attribute in attrs.fields(type(self)):
+                    value = getattr(self, attribute.name)
+                    if value != attribute.default:
+                        p.breakable()
+                        p.text(f"{attribute.name}=")
+                        if "parity" in attribute.name:
+                            p.text(str(value))
+                        else:
+                            p.pretty(value)  # type: ignore[attr-defined]
+                        p.text(",")
+            p.breakable()
+            p.text(")")
+
+
+@implement_pretty_repr
+@frozen(order=True)
+class State:
+    particle: Particle = field(validator=instance_of(Particle))
+    spin_projection: float = field(converter=to_float)
+
+
+@total_ordering
+@frozen(kw_only=True, order=False, repr=True)
+class StateWithID(State):
+    id: int  # noqa: A003
 
 
 @frozen
