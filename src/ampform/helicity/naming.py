@@ -147,14 +147,11 @@ class HelicityAmplitudeNameGenerator(NameGenerator):
         incoming_state, outgoing_states = get_helicity_info(transition, node_id)
         par_name_suffix = self.generate_two_body_decay_suffix(transition, node_id)
 
-        pp_par_name_suffix = (
-            _state_to_str(incoming_state, use_helicity=False)
-            + R" \to "
-            + " ".join(
-                _state_to_str(s, make_parity_partner=True) for s in outgoing_states
-            )
+        in_state = _state_to_str(incoming_state, use_helicity=False)
+        out_state = " ".join(
+            _state_to_str(s, make_parity_partner=True) for s in outgoing_states
         )
-
+        pp_par_name_suffix = Rf"{in_state} \to {out_state}"
         priority_name_suffix = par_name_suffix
         if outgoing_states[0].spin_projection < 0 or (
             outgoing_states[0].spin_projection == 0
@@ -169,7 +166,6 @@ class HelicityAmplitudeNameGenerator(NameGenerator):
         transition: StateTransition,
         node_id: int | None = None,
     ) -> str:
-        name = ""
         if node_id is None:
             node_ids = transition.topology.nodes
         else:
@@ -177,12 +173,9 @@ class HelicityAmplitudeNameGenerator(NameGenerator):
         names: list[str] = []
         for i in node_ids:
             incoming_state, outgoing_states = get_helicity_info(transition, i)
-            name = (
-                _state_to_str(incoming_state)
-                + R" \to "
-                + " ".join(_state_to_str(s) for s in outgoing_states)
-            )
-            names.append(name)
+            in_state = _state_to_str(incoming_state)
+            out_states = " ".join(_state_to_str(s) for s in outgoing_states)
+            names.append(Rf"{in_state} \to {out_states}")
         return "; ".join(names)
 
     def generate_two_body_decay_suffix(
@@ -316,11 +309,9 @@ def generate_transition_label(transition: StateTransition) -> str:
     final_state_ids = transition.topology.outgoing_edge_ids
     initial_states = get_sorted_states(transition, initial_state_ids)
     final_states = get_sorted_states(transition, final_state_ids)
-    return (
-        _state_to_str(initial_states[0])
-        + R" \to "
-        + " ".join(_state_to_str(s) for s in final_states)
-    )
+    in_state = _state_to_str(initial_states[0])
+    out_states = " ".join(_state_to_str(s) for s in final_states)
+    return Rf"{in_state} \to {out_states}"
 
 
 def get_helicity_angle_symbols(
