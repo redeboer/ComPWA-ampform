@@ -8,7 +8,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING, Iterable
 
 import sympy as sp
-from qrules.transition import ReactionInfo, State, StateTransition
+from qrules.transition import ReactionInfo, StateTransition
 
 from ampform.helicity.decay import (
     assert_isobar_topology,
@@ -21,6 +21,8 @@ from ampform.helicity.decay import (
 
 if TYPE_CHECKING:
     from qrules.topology import Topology
+
+    from ampform.decay import State
 
 
 class NameGenerator(ABC):

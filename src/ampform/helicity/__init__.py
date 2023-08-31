@@ -11,6 +11,7 @@ import logging
 import operator
 import sys
 from collections import OrderedDict, abc
+from fractions import Fraction
 from functools import reduce
 from typing import (
     TYPE_CHECKING,
@@ -747,8 +748,8 @@ def formulate_isobar_cg_coefficients(
     - :math:`s_i` the intrinsic `Spin.magnitude <qrules.particle.Spin.magnitude>` of
       each state :math:`i`,
     - :math:`\lambda_{2}, \lambda_{3}` the helicities of the decay products (can be
-      taken to be their `~qrules.transition.State.spin_projection` when following a
-      constistent boosting procedure),
+      taken to be their `~.State.spin_projection` when following a constistent boosting
+      procedure),
     - :math:`\lambda=\lambda_{2}-\lambda_{3}`,
     - :math:`L` the *total* angular momentum of the final state pair
       (`~qrules.quantum_numbers.InteractionProperties.l_magnitude`),
@@ -822,11 +823,10 @@ def formulate_isobar_wigner_d(transition: StateTransition, node_id: int) -> sp.E
 
     - :math:`s_1` the `Spin.magnitude <qrules.particle.Spin.magnitude>` of the decaying
       state,
-    - :math:`m_1` the `~qrules.transition.State.spin_projection` of the decaying state,
+    - :math:`m_1` the `~.State.spin_projection` of the decaying state,
     - :math:`\lambda_{2}, \lambda_{3}` the helicities of the decay products in in the
       restframe of :math:`1` (can be taken to be their intrinsic
-      `~qrules.transition.State.spin_projection` when following a constistent boosting
-      procedure),
+      `~.State.spin_projection` when following a constistent boosting procedure),
     - and :math:`\phi` and :math:`\theta` the helicity angles (see also
       :func:`.get_helicity_angle_symbols`).
 
@@ -893,8 +893,12 @@ def _generate_kinematic_variable_set(
     child1_mass = get_invariant_mass_symbol(topology, decay.children[0].id)
     child2_mass = get_invariant_mass_symbol(topology, decay.children[1].id)
     angular_momentum: int | None = decay.interaction.l_magnitude
-    if angular_momentum is None and decay.parent.particle.spin.is_integer():
-        angular_momentum = int(decay.parent.particle.spin)
+    if angular_momentum is None:
+        spin = decay.parent.particle.spin
+        if isinstance(spin, float) and decay.parent.particle.spin.is_integer():
+            angular_momentum = int(decay.parent.particle.spin)
+        elif isinstance(spin, Fraction) and spin.denominator == 1:
+            angular_momentum = int(spin)
     return TwoBodyKinematicVariableSet(
         incoming_state_mass=inv_mass,
         outgoing_state_mass1=child1_mass,

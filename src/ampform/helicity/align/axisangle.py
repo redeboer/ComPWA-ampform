@@ -196,12 +196,10 @@ def formulate_wigner_rotation(
     Args:
         transition: The `~qrules.transition.StateTransition` in which you
             want to rotate one of the spin states.
-        rotated_state_id: The state ID of a spin `~qrules.transition.State`
-            that you want to rotate.
+        rotated_state_id: The state ID of a spin `.State` that you want to rotate.
         helicity_symbol: Optional `~sympy.core.symbol.Symbol` for :math:`m` in
-            :math:`D^s_{mm'}`. Falls back to the value of
-            `~qrules.transition.State.spin_projection` embedded in the provided
-            :code:`transition`.
+            :math:`D^s_{mm'}`. Falls back to the value of `.State.spin_projection`
+            embedded in the provided :code:`transition`.
         m_prime: The summation symbol :math:`m'` that should be used when
             summing over the Wigner-:math:`D` functions for this rotation.
     """

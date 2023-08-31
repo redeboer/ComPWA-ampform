@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Iterable
 from attrs import frozen
 from qrules.transition import ReactionInfo, StateTransition
 
-from ampform.decay import State, StateWithID
+from ampform.decay import Particle, State, StateWithID
 
 if sys.version_info < (3, 8):
     from typing_extensions import Literal
@@ -17,6 +17,7 @@ else:
     from typing import Literal
 
 if TYPE_CHECKING:
+    import qrules
     from qrules.quantum_numbers import InteractionProperties
     from qrules.topology import Topology
 
@@ -252,14 +253,38 @@ def list_decay_chain_ids(topology: Topology, state_id: int) -> list[int]:
 def get_sorted_states(
     transition: StateTransition, state_ids: Iterable[int]
 ) -> list[State]:
-    """Get a sorted list of `~qrules.transition.State` instances.
+    """Get a sorted list of `.State` instances.
 
     In order to ensure correct naming of amplitude coefficients the list has to be
     sorted by name. The same coefficient names have to be created for two transitions
     that only differ from a kinematic standpoint (swapped external edges).
     """
     states = [transition.states[i] for i in state_ids]
-    return sorted(states, key=lambda s: s.particle.name)
+    qrules_states = sorted(states, key=lambda s: s.particle.name)
+    return [convert_state(s) for s in qrules_states]
+
+
+def convert_state(state: qrules.transition.State) -> State:
+    return State(
+        particle=convert_particle(state.particle),
+        spin_projection=state.spin_projection,
+    )
+
+
+def convert_particle(p: qrules.particle.Particle) -> Particle:
+    return Particle(
+        name=p.name,
+        pid=p.pid,
+        latex=p.latex,
+        mass=p.mass,
+        width=p.width,
+        spin=p.spin,
+        charge=p.charge,
+        isospin=p.isospin if p.isospin is None else p.isospin.magnitude,  # type: ignore[arg-type]
+        parity=p.parity if p.parity is None else p.parity.value,  # type: ignore[arg-type]
+        c_parity=p.c_parity if p.c_parity is None else p.c_parity.value,  # type: ignore[arg-type]
+        g_parity=p.g_parity if p.g_parity is None else p.g_parity.value,  # type: ignore[arg-type]
+    )
 
 
 def assert_isobar_topology(topology: Topology) -> None:

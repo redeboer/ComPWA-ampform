@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING, Any
 
 import attrs
 from attrs import field, frozen
-from qrules.transition import State
+from attrs.converters import optional
+
+from ampform._implementers import implement_pretty_repr, to_float
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -33,7 +35,7 @@ class Particle:
     width: float = field(converter=float, default=0.0)
     spin: Fraction = field(converter=Fraction)
     charge: Fraction = field(converter=Fraction, default=Fraction(0))
-    isospin: Fraction | None = None
+    isospin: Fraction | None = field(converter=optional(Fraction), default=None)
     parity: Parity | None = None
     c_parity: Parity | None = None
     g_parity: Parity | None = None
@@ -64,11 +66,16 @@ class Particle:
             p.text(")")
 
 
+@implement_pretty_repr
+@frozen(order=True)
+class State:
+    particle: Particle
+    spin_projection: float = field(converter=to_float)
+
+
 @total_ordering
 @frozen(kw_only=True, order=False, repr=True)
 class StateWithID(State):
-    """Extension of `~qrules.transition.State` that embeds the state ID."""
-
     id: int  # noqa: A003
 
     @classmethod

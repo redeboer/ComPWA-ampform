@@ -1,9 +1,12 @@
 """Collections of functions for working with QRules."""
 from __future__ import annotations
 
-from qrules import ReactionInfo
+from typing import TYPE_CHECKING
 
 from ampform.helicity import CanonicalAmplitudeBuilder, HelicityAmplitudeBuilder
+
+if TYPE_CHECKING:
+    from qrules import ReactionInfo
 
 
 def get_builder(reaction: ReactionInfo) -> HelicityAmplitudeBuilder:
@@ -14,7 +17,7 @@ def get_builder(reaction: ReactionInfo) -> HelicityAmplitudeBuilder:
     """
     formalism = reaction.formalism
     if formalism is None:
-        msg = f"{ReactionInfo.__name__} does not have a formalism type:\n{reaction}"
+        msg = f"ReactionInfo does not have a formalism type:\n{reaction}"
         raise ValueError(msg)
     if formalism == "helicity":
         amplitude_builder = HelicityAmplitudeBuilder(reaction)

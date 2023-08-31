@@ -29,7 +29,6 @@ __TARGET_SUBSTITUTIONS = {
     "Particle": "qrules.particle.Particle",
     "ReactionInfo": "qrules.transition.ReactionInfo",
     "Slider": "symplot.Slider",
-    "State": "qrules.transition.State",
     "StateTransition": "qrules.transition.StateTransition",
     "Topology": "qrules.topology.Topology",
     "WignerD": "sympy.physics.quantum.spin.WignerD",
