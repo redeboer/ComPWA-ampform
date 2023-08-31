@@ -143,7 +143,6 @@ class HelicityModel:
     `~collections.OrderedDict` that orders the component names alphabetically with
     natural sort order (:func:`.natural_sorting`).
     """
-    reaction_info: ReactionInfo = field(validator=instance_of(ReactionInfo))
 
     @property
     def expression(self) -> sp.Expr:
@@ -423,7 +422,6 @@ class HelicityAmplitudeBuilder:
             parameter_defaults=self.__ingredients.parameter_defaults,
             kinematic_variables=kinematic_variables,
             components=self.__ingredients.components,
-            reaction_info=self.reaction,
         )
 
     def __formulate_top_expression(self) -> PoolSum:
