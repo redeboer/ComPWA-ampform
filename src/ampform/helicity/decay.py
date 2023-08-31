@@ -7,32 +7,18 @@ from functools import lru_cache, singledispatch
 from typing import TYPE_CHECKING, Iterable
 
 from attrs import frozen
-from qrules.transition import ReactionInfo, State, StateTransition
+from qrules.transition import ReactionInfo, StateTransition
 
-if TYPE_CHECKING:
-    from qrules.quantum_numbers import InteractionProperties
-    from qrules.topology import Topology
+from ampform.decay import State, StateWithID
 
 if sys.version_info < (3, 8):
     from typing_extensions import Literal
 else:
     from typing import Literal
 
-
-@frozen
-class StateWithID(State):
-    """Extension of `~qrules.transition.State` that embeds the state ID."""
-
-    id: int  # noqa: A003
-
-    @classmethod
-    def from_transition(cls, transition: StateTransition, state_id: int) -> StateWithID:
-        state = transition.states[state_id]
-        return cls(
-            id=state_id,
-            particle=state.particle,
-            spin_projection=state.spin_projection,
-        )
+if TYPE_CHECKING:
+    from qrules.quantum_numbers import InteractionProperties
+    from qrules.topology import Topology
 
 
 @frozen

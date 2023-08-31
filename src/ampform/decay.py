@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import attrs
 from attrs import field, frozen
+from qrules.transition import State
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -17,7 +18,7 @@ else:
 
 if TYPE_CHECKING:
     from IPython.lib.pretty import PrettyPrinter
-
+    from qrules.transition import StateTransition
 
 Parity = Literal[-1, 1]
 
@@ -61,3 +62,20 @@ class Particle:
                         p.text(",")
             p.breakable()
             p.text(")")
+
+
+@total_ordering
+@frozen(kw_only=True, order=False, repr=True)
+class StateWithID(State):
+    """Extension of `~qrules.transition.State` that embeds the state ID."""
+
+    id: int  # noqa: A003
+
+    @classmethod
+    def from_transition(cls, transition: StateTransition, state_id: int) -> StateWithID:
+        state = transition.states[state_id]
+        return cls(
+            id=state_id,
+            particle=state.particle,  # type: ignore[arg-type]
+            spin_projection=state.spin_projection,
+        )
