@@ -221,7 +221,7 @@ def get_parent_id(topology: Topology, state_id: int) -> int | None:
         topology.get_edge_ids_ingoing_to_node(edge.originating_node_id)
     )
     if len(incoming_edge_ids) != 1:
-        msg = f"{StateTransition.__name__} is not an isobar decay"
+        msg = "StateTransition is not an isobar decay"
         raise ValueError(msg)
     return incoming_edge_ids[0]
 
