@@ -57,6 +57,7 @@ class BlattWeisskopfSquared(UnevaluatedExpression):
 
     See also :ref:`usage/dynamics:Form factor`.
     """
+
     is_commutative = True
     max_angular_momentum: int | None = None
     """Limit the maximum allowed angular momentum :math:`L`.

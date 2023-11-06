@@ -135,9 +135,9 @@ class HelicityAmplitudeNameGenerator(NameGenerator):
 
                 else:
                     # if neither this coefficient nor its partner are registered just add it
-                    self.__parity_partner_coefficient_mapping[coefficient_suffix] = (
+                    self.__parity_partner_coefficient_mapping[
                         coefficient_suffix
-                    )
+                    ] = coefficient_suffix
 
     def __generate_amplitude_coefficient_couple(
         self, transition: StateTransition, node_id: int

@@ -396,9 +396,9 @@ class HelicityAmplitudeBuilder:
                 indices = _get_final_state_ids(mass_symbol)
                 if set(indices) == set(self.reaction.initial_state):
                     if self.config.scalar_initial_state_mass:
-                        self.__ingredients.parameter_defaults[mass_symbol] = (
-                            self.reaction.initial_state[0].mass
-                        )
+                        self.__ingredients.parameter_defaults[
+                            mass_symbol
+                        ] = self.reaction.initial_state[0].mass
                         continue
                     indices = tuple(sorted(self.reaction.final_state))
                 if (
