@@ -176,6 +176,7 @@ branch = true
 source = ["src"]
 
 [tool.mypy]
+enable_incomplete_feature = "Unpack"
 exclude = "_build"
 show_error_codes = true
 warn_unused_configs = true
@@ -224,6 +225,7 @@ reportUnknownVariableType = false
 reportUnnecessaryComparison = false
 reportUnnecessaryContains = false
 reportUnnecessaryIsInstance = false
+reportUntypedClassDecorator = false
 reportUntypedFunctionDecorator = false
 reportUnusedClass = true
 reportUnusedFunction = true
