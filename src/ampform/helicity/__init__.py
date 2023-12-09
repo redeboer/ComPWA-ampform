@@ -10,9 +10,8 @@ from __future__ import annotations
 import collections
 import logging
 import operator
-import sys
 from collections import OrderedDict, abc
-from functools import reduce
+from functools import reduce, singledispatchmethod
 from typing import (
     TYPE_CHECKING,
     ItemsView,
@@ -63,11 +62,6 @@ from ampform.kinematics.lorentz import (
 )
 from ampform.sympy import PoolSum, determine_indices
 from ampform.sympy._array_expressions import ArraySum
-
-if sys.version_info >= (3, 8):
-    from functools import singledispatchmethod
-else:
-    from singledispatchmethod import singledispatchmethod
 
 if TYPE_CHECKING:
     from IPython.lib.pretty import PrettyPrinter

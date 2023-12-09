@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import sys
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Dict, Protocol, Tuple
 
 import sympy as sp
 from attrs import field, frozen
@@ -19,11 +18,6 @@ from ampform.dynamics.phasespace import (
     PhaseSpaceFactor,
     PhaseSpaceFactorProtocol,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:  # pragma: no cover
-    from typing_extensions import Protocol
 
 if TYPE_CHECKING:
     from qrules.particle import Particle

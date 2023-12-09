@@ -31,15 +31,10 @@ from ampform.kinematics.lorentz import create_four_momentum_symbols
 from ampform.sympy import PoolSum
 
 if TYPE_CHECKING:
-    import sys
+    from typing import Literal
 
     from qrules.topology import Topology
     from qrules.transition import ReactionInfo, StateTransition
-
-    if sys.version_info >= (3, 8):
-        from typing import Literal
-    else:
-        from typing_extensions import Literal
 
 
 class AxisAngleAlignment(SpinAlignment):

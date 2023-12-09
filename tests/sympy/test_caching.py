@@ -26,8 +26,6 @@ if TYPE_CHECKING:
     ],
 )
 def test_get_readable_hash(assumptions, expected_hash, caplog: LogCaptureFixture):
-    if sys.version_info < (3, 8) or sys.version_info >= (3, 11):
-        pytest.skip("Cannot run this test on Python 3.7")
     caplog.set_level(logging.WARNING)
     x, y = sp.symbols("x y", **assumptions)
     expr = x**2 + y
@@ -61,9 +59,7 @@ def test_get_readable_hash_energy_dependent_width():
     python_hash_seed = os.environ.get("PYTHONHASHSEED")
     if python_hash_seed is None:
         pytest.skip("PYTHONHASHSEED has been set, but is not 0")
-    if sys.version_info < (3, 8):
-        assert h == "pythonhashseed-0+6939334787254793397"
-    elif sys.version_info >= (3, 11):
+    if sys.version_info >= (3, 11):
         assert h == "pythonhashseed-0+9024370553709012963"
     else:
         assert h == "pythonhashseed-0+5847558977249966029"
@@ -74,14 +70,7 @@ def test_get_readable_hash_large(amplitude_model: tuple[str, HelicityModel]):
     if python_hash_seed != "0":
         pytest.skip("PYTHONHASHSEED is not 0")
     formalism, model = amplitude_model
-    if sys.version_info < (3, 8):
-        # https://github.com/ComPWA/ampform/actions/runs/3277058875/jobs/5393849802
-        # https://github.com/ComPWA/ampform/actions/runs/3277143883/jobs/5394043014
-        expected_hash = {
-            "canonical-helicity": "pythonhashseed-0-6040455869260657745",
-            "helicity": "pythonhashseed-0-1928646339459384503",
-        }[formalism]
-    elif sys.version_info >= (3, 11):
+    if sys.version_info >= (3, 11):
         expected_hash = {
             "canonical-helicity": "pythonhashseed-0+409069872540431022",
             "helicity": "pythonhashseed-0-8907705932662936900",

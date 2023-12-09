@@ -12,7 +12,6 @@ This module provides several parametrizations. They all comply with the
 
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING, Sequence
 
 import sympy as sp
@@ -28,10 +27,7 @@ from ampform.sympy.math import ComplexSqrt
 if TYPE_CHECKING:
     from sympy.printing.latex import LatexPrinter
 
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol  # pragma: no cover
+from typing import Protocol  # pragma: no cover
 
 
 class PhaseSpaceFactorProtocol(Protocol):
