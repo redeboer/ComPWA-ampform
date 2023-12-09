@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Protocol, Tuple
+from typing import TYPE_CHECKING, Protocol
 
 import sympy as sp
 from attrs import field, frozen
@@ -40,7 +40,7 @@ class TwoBodyKinematicVariableSet:
     angular_momentum: int | None = field(default=None)
 
 
-BuilderReturnType = Tuple[sp.Expr, Dict[sp.Symbol, float]]
+BuilderReturnType = tuple[sp.Expr, dict[sp.Symbol, float]]
 """Type that a `.ResonanceDynamicsBuilder` should return.
 
 The first element in this `tuple` is the `sympy.Expr <sympy.core.expr.Expr>` that

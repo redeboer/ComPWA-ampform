@@ -6,7 +6,7 @@ See :cite:`marangottoHelicityAmplitudesGeneric2020` and `Wigner rotations
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generator, Sequence, TypeVar, overload
+from typing import TYPE_CHECKING, TypeVar, overload
 
 import sympy as sp
 
@@ -31,6 +31,7 @@ from ampform.kinematics.lorentz import create_four_momentum_symbols
 from ampform.sympy import PoolSum
 
 if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
     from typing import Literal
 
     from qrules.topology import Topology

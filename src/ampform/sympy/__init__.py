@@ -13,13 +13,15 @@ import re
 from abc import abstractmethod
 from os.path import abspath, dirname, expanduser
 from textwrap import dedent
-from typing import TYPE_CHECKING, Callable, Iterable, Sequence, SupportsFloat, TypeVar
+from typing import TYPE_CHECKING, Callable, SupportsFloat, TypeVar
 
 import sympy as sp
 from sympy.printing.conventions import split_super_sub
 from sympy.printing.precedence import PRECEDENCE
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from sympy.printing.latex import LatexPrinter
     from sympy.printing.numpy import NumPyPrinter
 
@@ -564,7 +566,7 @@ def _get_python_hash_seed() -> int | None:
     return None
 
 
-@functools.lru_cache(maxsize=None)  # warn once
+@functools.cache  # warn once
 def _warn_about_unsafe_hash():
     message = """
     PYTHONHASHSEED has not been set. For faster and safer hashing of SymPy expressions,

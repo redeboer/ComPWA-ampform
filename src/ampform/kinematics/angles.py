@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Mapping
+from typing import TYPE_CHECKING
 
 import sympy as sp
 
@@ -42,6 +42,8 @@ from ampform.sympy._array_expressions import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from qrules.topology import Topology
     from sympy.printing.latex import LatexPrinter
 

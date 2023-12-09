@@ -12,17 +12,7 @@ import logging
 import operator
 from collections import OrderedDict, abc
 from functools import reduce, singledispatchmethod
-from typing import (
-    TYPE_CHECKING,
-    ItemsView,
-    Iterable,
-    Iterator,
-    KeysView,
-    Mapping,
-    Sequence,
-    Union,
-    ValuesView,
-)
+from typing import TYPE_CHECKING, Union
 
 import attrs
 import sympy as sp
@@ -64,6 +54,16 @@ from ampform.sympy import PoolSum, determine_indices
 from ampform.sympy._array_expressions import ArraySum
 
 if TYPE_CHECKING:
+    from collections.abc import (
+        ItemsView,
+        Iterable,
+        Iterator,
+        KeysView,
+        Mapping,
+        Sequence,
+        ValuesView,
+    )
+
     from IPython.lib.pretty import PrettyPrinter
 
 _LOGGER = logging.getLogger(__name__)

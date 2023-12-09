@@ -5,7 +5,8 @@ See :cite:`mikhasenkoDalitzplotDecompositionThreebody2020`.
 
 from __future__ import annotations
 
-from functools import lru_cache, singledispatch
+import functools
+from functools import singledispatch
 from typing import TYPE_CHECKING, Literal, TypeVar
 
 import attrs
@@ -47,7 +48,7 @@ class DalitzPlotDecomposition(SpinAlignment):
         return _formulate_aligned_amplitude(reaction, self.reference_subsystem)[1]
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def _formulate_aligned_amplitude(
     reaction: ReactionInfo, reference_subsystem: Literal[1, 2, 3]
 ) -> tuple[sp.Expr, dict[sp.Symbol, sp.Expr]]:

@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import functools
 import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from functools import lru_cache
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 import sympy as sp
 from qrules.transition import ReactionInfo, State, StateTransition
@@ -21,6 +21,8 @@ from ampform.helicity.decay import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from qrules.topology import Topology
 
 
@@ -335,7 +337,7 @@ def get_helicity_angle_symbols(
     )
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def get_boost_chain_suffix(topology: Topology, state_id: int) -> str:
     """Generate a subscript-superscript to identify a chain of Lorentz boosts.
 

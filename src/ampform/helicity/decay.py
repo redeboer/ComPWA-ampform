@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import collections
-from functools import lru_cache, singledispatch
-from typing import TYPE_CHECKING, Iterable
+import functools
+from functools import singledispatch
+from typing import TYPE_CHECKING
 
 from attrs import frozen
 from qrules.transition import ReactionInfo, State, StateTransition
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from qrules.quantum_numbers import InteractionProperties
     from qrules.topology import Topology
 
@@ -106,7 +109,7 @@ def _(obj: tuple) -> TwoBodyDecay:
     raise NotImplementedError(msg)
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def is_opposite_helicity_state(topology: Topology, state_id: int) -> bool:
     """Determine if an edge is an "opposite helicity" state.
 
@@ -174,7 +177,7 @@ def get_sibling_state_id(topology: Topology, state_id: int) -> int:
     return next(iter(out_state_ids))
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def get_spectator_id(topology: Topology) -> Literal[1, 2, 3]:
     assert_three_body_decay(topology)
     decay_products = topology.get_edge_ids_outgoing_from_node(1)
@@ -182,7 +185,7 @@ def get_spectator_id(topology: Topology) -> Literal[1, 2, 3]:
     return next(iter(spectator_id_candidates))  # type: ignore[arg-type]
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def get_decay_product_ids(
     topology: Topology,
 ) -> tuple[Literal[1, 2, 3], Literal[1, 2, 3]]:
@@ -278,7 +281,7 @@ def assert_isobar_topology(topology: Topology) -> None:
         assert_two_body_decay(topology, node_id)
 
 
-@lru_cache(maxsize=None)
+@functools.cache
 def assert_three_body_decay(topology: Topology) -> None:
     n_initial = len(topology.incoming_edge_ids)
     n_final = len(topology.outgoing_edge_ids)

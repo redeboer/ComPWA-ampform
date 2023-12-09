@@ -12,7 +12,7 @@ This module provides several parametrizations. They all comply with the
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import sympy as sp
 
@@ -25,6 +25,8 @@ from ampform.sympy import (
 from ampform.sympy.math import ComplexSqrt
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from sympy.printing.latex import LatexPrinter
 
 from typing import Protocol  # pragma: no cover
