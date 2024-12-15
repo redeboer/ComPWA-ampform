@@ -3,8 +3,8 @@
 #   jupytext:
 #     text_representation:
 #       extension: .py
-#       format_name: light
-#       format_version: '1.5'
+#       format_name: percent
+#       format_version: '1.3'
 #       jupytext_version: 1.16.4
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
@@ -12,34 +12,39 @@
 #     name: python3
 # ---
 
-# + hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell", "skip-execution"]
+# %% hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell", "skip-execution"]
 # WARNING: advised to install a specific version, e.g. ampform==0.1.2
 # %pip install -q ampform[doc,viz] IPython
 
-# + hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell"]
+# %% hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell"]
 import os
 
 STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
-# -
 
+# %% [markdown]
 # ```{autolink-concat}
 # ```
 
+# %% [markdown]
 # # Analytic continuation
 
+# %% [markdown]
 # :::{note}
 #
 # Improvements to analytic continuation in AmpForm are currently being developed in {doc}`compwa-report:003/index` and {doc}`compwa-report:004/index`.
 #
 # :::
 
+# %% [markdown]
 # Analytic continuation allows one to handle resonances just below threshold ($m_0 < m_a + m_b$  in Eq. {eq}`relativistic_breit_wigner_with_ff`). In practice, this entails using a specific function for $\rho$ in Eq. {eq}`EnergyDependentWidth`.
 
+# %% [markdown]
 # ## Definitions
 
+# %% [markdown]
 # Three usual choices for $\rho$ are the following:
 
-# + jupyter={"source_hidden": true} mystnb={"code_prompt_show": "Import Python libraries"} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} mystnb={"code_prompt_show": "Import Python libraries"} tags=["hide-input"]
 # %config InlineBackend.figure_formats = ['svg']
 
 import warnings
@@ -50,90 +55,98 @@ from IPython.display import Math
 from ampform.io import aslatex
 
 warnings.filterwarnings("ignore")
-# -
 
+# %% [markdown]
 # ### 1) Break-up momentum
 
+# %% [markdown]
 # The {func}`~sympy.functions.elementary.miscellaneous.sqrt` or {class}`.ComplexSqrt` of {class}`.BreakupMomentumSquared`:
 
-# +
+# %%
 from ampform.dynamics import BreakupMomentumSquared
 
 s, m_a, m_b = sp.symbols("s, m_a, m_b", nonnegative=True)
 q_squared = BreakupMomentumSquared(s, m_a, m_b)
 Math(aslatex({q_squared: q_squared.evaluate()}))
-# -
 
+# %% [markdown]
 # ### 2) 'Normal' phase space factor
 
+# %% [markdown]
 # The 'normal' {class}`.PhaseSpaceFactor` (the denominator makes the difference to {eq}`EnergyDependentWidth`!):
 
-# +
+# %%
 from ampform.dynamics import PhaseSpaceFactor
 
 rho = PhaseSpaceFactor(s, m_a, m_b)
 Math(aslatex({rho: rho.evaluate()}))
-# -
 
+# %% [markdown]
 # ### 3) 'Complex' phase space factor
 
+# %% [markdown]
 # A {class}`.PhaseSpaceFactorComplex` that uses {class}`.ComplexSqrt`:
 
-# +
+# %%
 from ampform.dynamics import PhaseSpaceFactorComplex
 
 rho_c = PhaseSpaceFactorComplex(s, m_a, m_b)
 Math(aslatex({rho_c: rho_c.evaluate()}))
-# -
 
+# %% [markdown]
 # ### 4) 'Analytic continuation' of the phase space factor
 
+# %% [markdown]
 # The following 'case-by-case' **analytic continuation** for decay products with an _equal_ mass, {class}`.EqualMassPhaseSpaceFactor`:
 
-# +
+# %%
 from ampform.dynamics import EqualMassPhaseSpaceFactor
 
 rho_ac = EqualMassPhaseSpaceFactor(s, m_a, m_b)
 Math(aslatex({rho_ac: rho_ac.evaluate()}))
-# -
 
+# %% [markdown]
 # with
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 from ampform.dynamics import PhaseSpaceFactorAbs
 
 rho_hat = PhaseSpaceFactorAbs(s, m_a, m_b)
 Math(aslatex({rho_hat: rho_hat.evaluate()}))
-# -
 
+# %% [markdown]
 # (Mind the absolute value.)
 
+# %% [markdown]
 # ### 5) Chew-Mandelstam for $S$-waves
 
+# %% [markdown]
 # A {class}`.PhaseSpaceFactorSWave` that uses {func}`.chew_mandelstam_s_wave`:
 
-# + tags=["full-width"]
+# %% tags=["full-width"]
 from ampform.dynamics import PhaseSpaceFactorSWave
 
 rho_cm = PhaseSpaceFactorSWave(s, m_a, m_b)
 Math(aslatex({rho_cm: rho_cm.evaluate()}))
-# -
 
+# %% [markdown]
 # ## Visualization
 
+# %% [markdown]
 # ```{autolink-skip}
 # ```
 
+# %%
 # %matplotlib widget
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 import matplotlib.pyplot as plt
 import mpl_interactions.ipyplot as iplt
 import numpy as np
 
 import symplot
 
-# +
+# %%
 from ampform.sympy.math import ComplexSqrt
 
 m = sp.Symbol("m", nonnegative=True)
@@ -147,10 +160,11 @@ np_breakup_momentum = sp.lambdify(
     (m, m_a, m_b),
     2 * ComplexSqrt(q_squared.subs(s, m**2).doit()),
 )
-# -
 
+# %% [markdown]
 # {{ run_interactive }}
 
+# %%
 plot_domain = np.linspace(0, 3, 500)
 sliders.set_ranges(
     m_a=(0, 2, 200),
@@ -161,7 +175,7 @@ sliders.set_values(
     m_b=0.75,
 )
 
-# + jupyter={"source_hidden": true} tags=["remove-output", "hide-input"]
+# %% jupyter={"source_hidden": true} tags=["remove-output", "hide-input"]
 fig, axes = plt.subplots(
     ncols=2,
     nrows=2,
@@ -274,7 +288,7 @@ fig.tight_layout()
 plt.legend(loc="upper right")
 plt.show()
 
-# + jupyter={"source_hidden": true} tags=["remove-input", "full-width"]
+# %% jupyter={"source_hidden": true} tags=["remove-input", "full-width"]
 if STATIC_WEB_PAGE:
     from IPython.display import SVG, display
 

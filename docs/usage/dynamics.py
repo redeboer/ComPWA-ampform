@@ -3,8 +3,8 @@
 #   jupytext:
 #     text_representation:
 #       extension: .py
-#       format_name: light
-#       format_version: '1.5'
+#       format_name: percent
+#       format_version: '1.3'
 #       jupytext_version: 1.16.4
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
@@ -12,23 +12,26 @@
 #     name: python3
 # ---
 
-# + hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell", "skip-execution"]
+# %% hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell", "skip-execution"]
 # WARNING: advised to install a specific version, e.g. ampform==0.1.2
 # %pip install -q ampform[doc,viz] IPython
 
-# + hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell"]
+# %% hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell"]
 import os
 
 STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
-# -
 
+# %% [markdown]
 # ```{autolink-concat}
 # ```
 
+# %% [markdown]
 # # Dynamics
 
+# %% [markdown]
 # {{ run_interactive }}
 
+# %% [markdown]
 # By default, the dynamic terms in an amplitude model are set to $1$ by the {class}`.HelicityAmplitudeBuilder`. The method {meth}`~.DynamicsSelector.assign` of the {attr}`~.HelicityAmplitudeBuilder.dynamics` attribute can then be used to set dynamics lineshapes for specific resonances. The {mod}`.dynamics.builder` module provides some tools to set standard lineshapes (see below), but it is also possible to set {doc}`custom dynamics </usage/dynamics/custom>`.
 #
 # The standard lineshapes provided by AmpForm are illustrated below. For more info, have a look at the following pages:
@@ -43,7 +46,7 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 # ```{autolink-skip}
 # ```
 
-# + jupyter={"source_hidden": true} mystnb={"code_prompt_show": "Import Python libraries"} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} mystnb={"code_prompt_show": "Import Python libraries"} tags=["hide-input"]
 import logging
 import warnings
 
@@ -59,20 +62,21 @@ logging.basicConfig()
 logging.getLogger().setLevel(logging.ERROR)
 
 warnings.filterwarnings("ignore")
-# -
 
+# %% [markdown]
 # ## Form factor
 
+# %% [markdown]
 # AmpForm uses Blatt-Weisskopf functions $B_L$ as _barrier factors_ (also called _form factors_, see {class}`.BlattWeisskopfSquared` and **[TR-029](https://compwa.github.io/report/029)**):
 
-# +
+# %%
 from ampform.dynamics.form_factor import BlattWeisskopfSquared
 
 L = sp.Symbol("L", integer=True, nonnegative=True)
 z = sp.Symbol("z", nonnegative=True, real=True)
 bl2 = BlattWeisskopfSquared(z, L)
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 from ampform.dynamics.form_factor import SphericalHankel1
 from ampform.io import aslatex
 
@@ -80,7 +84,7 @@ ell = sp.Symbol(R"\ell", integer=True, nonnegative=True)
 exprs = [bl2, SphericalHankel1(ell, z)]
 Math(aslatex({e: e.doit(deep=False) for e in exprs}))
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 # %config InlineBackend.figure_formats = ['svg']
 # %matplotlib inline
 
@@ -97,27 +101,27 @@ for i in range(5):
     ax.plot(x_values, y_values, color=f"C{i}", label=f"$L={i}$")
 ax.legend()
 fig.show()
-# -
 
+# %% [markdown]
 # The Blatt-Weisskopf form factor is used to 'dampen' the breakup-momentum at threshold and when going to infinity. A usual choice for $z$ is therefore $z=q^2d^2$ with $q^2$ the {class}`.BreakupMomentumSquared` and $d$ the impact parameter (also called meson radius). The {class}`.FormFactor` expression class can be used for this:
 
-# + jupyter={"source_hidden": true}
+# %% jupyter={"source_hidden": true}
 from ampform.dynamics.form_factor import FormFactor
 
 s, m1, m2, d = sp.symbols("s m1 m2 d", nonnegative=True)
 ff2 = FormFactor(s, m1, m2, angular_momentum=L, meson_radius=d)
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 from ampform.dynamics.form_factor import BreakupMomentumSquared
 
 q2 = BreakupMomentumSquared(s, m1, m2)
 exprs = [ff2, q2]
 Math(aslatex({e: e.doit(deep=False) for e in exprs}))
 
-# + tags=["remove-input"]
+# %% tags=["remove-input"]
 # %matplotlib widget
 
-# + jupyter={"source_hidden": true} tags=["hide-input", "remove-output", "scroll-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input", "remove-output", "scroll-input"]
 import ipywidgets as w
 
 ff2_func = sp.lambdify((s, m1, m2, L, d), ff2.doit())
@@ -170,36 +174,40 @@ OUTPUT = w.interactive_output(plot, controls=sliders)
 ax.legend(loc="upper right")
 display(UI, OUTPUT)
 
-# + jupyter={"source_hidden": true} tags=["remove-input"]
+# %% jupyter={"source_hidden": true} tags=["remove-input"]
 if STATIC_WEB_PAGE:
     from IPython.display import SVG
 
     output_file = "blatt-weisskopf.svg"
     fig.savefig(output_file)
     display(SVG(output_file))
-# -
 
+# %% [markdown]
 # ## Relativistic Breit-Wigner
 
+# %% [markdown]
 # AmpForm has two types of relativistic Breit-Wigner functions. Both are compared below ― for more info, see the links to the API.
 
+# %% [markdown]
 # ### _Without_ form factor
 
+# %% [markdown]
 # The 'normal' {func}`.relativistic_breit_wigner` looks as follows:
 
-# +
+# %%
 from ampform.dynamics import relativistic_breit_wigner
 
 m, m0, w0 = sp.symbols("m, m0, Gamma0", nonnegative=True)
 rel_bw = relativistic_breit_wigner(s=m**2, mass0=m0, gamma0=w0)
 rel_bw
-# -
 
+# %% [markdown]
 # ### _With_ form factor
 
+# %% [markdown]
 # The relativistic Breit-Wigner can be adapted slightly, so that its amplitude goes to zero at threshold ($m_0 = m1 + m2$) and that it becomes normalizable. This is done with {ref}`form factors <usage/dynamics:Form factor>` and can be obtained with the function {func}`.relativistic_breit_wigner_with_ff`:
 
-# +
+# %%
 from ampform.dynamics import PhaseSpaceFactorSWave, relativistic_breit_wigner_with_ff
 
 rel_bw_with_ff = relativistic_breit_wigner_with_ff(
@@ -213,11 +221,11 @@ rel_bw_with_ff = relativistic_breit_wigner_with_ff(
     phsp_factor=PhaseSpaceFactorSWave,
 )
 rel_bw_with_ff
-# -
 
+# %% [markdown]
 # Here, $\Gamma(m)$ is the {class}`.EnergyDependentWidth` (also called running width or mass-dependent width), defined as:
 
-# + jupyter={"source_hidden": true}
+# %% jupyter={"source_hidden": true}
 from ampform.dynamics import EnergyDependentWidth
 
 L = sp.Symbol("L", integer=True)
@@ -232,15 +240,17 @@ width = EnergyDependentWidth(
     phsp_factor=PhaseSpaceFactorSWave,
 )
 Math(aslatex({width: width.evaluate()}))
-# -
 
+# %% [markdown]
 # It is possible to choose different formulations for the phase space factor $\rho$, see {doc}`/usage/dynamics/analytic-continuation`.
 
+# %% [markdown]
 # ### Analytic continuation
 
+# %% [markdown]
 # The following shows the effect of {doc}`/usage/dynamics/analytic-continuation` a on relativistic Breit-Wigner:
 
-# + jupyter={"source_hidden": true} tags=["hide-cell", "remove-output"]
+# %% jupyter={"source_hidden": true} tags=["hide-cell", "remove-output"]
 from ampform.dynamics import PhaseSpaceFactorComplex
 
 # Two types of relativistic Breit-Wigners
@@ -388,7 +398,7 @@ ax_ac.legend(loc="upper right")
 fig.tight_layout()
 plt.show()
 
-# + jupyter={"source_hidden": true} tags=["remove-input", "full-width"]
+# %% jupyter={"source_hidden": true} tags=["remove-input", "full-width"]
 if STATIC_WEB_PAGE:
     from IPython.display import SVG
 

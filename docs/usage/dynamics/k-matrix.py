@@ -3,8 +3,8 @@
 #   jupytext:
 #     text_representation:
 #       extension: .py
-#       format_name: light
-#       format_version: '1.5'
+#       format_name: percent
+#       format_version: '1.3'
 #       jupytext_version: 1.16.4
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
@@ -12,23 +12,26 @@
 #     name: python3
 # ---
 
-# + hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell", "skip-execution"]
+# %% hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell", "skip-execution"]
 # WARNING: advised to install a specific version, e.g. ampform==0.1.2
 # %pip install -q ampform[doc,viz] IPython
 
-# + hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell"]
+# %% hideCode=true hideOutput=true hidePrompt=true jupyter={"source_hidden": true} tags=["remove-cell"]
 import os
 
 STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
-# -
 
+# %% [markdown]
 # ```{autolink-concat}
 # ```
 
+# %% [markdown]
 # # K-matrix
 
+# %% [markdown]
 # <!-- cspell:ignore amma -->
 
+# %% [markdown]
 # While {mod}`ampform` does not yet provide a generic way to formulate an amplitude model with $\boldsymbol{K}$-matrix dynamics, the (experimental) {mod}`.kmatrix` module makes it fairly simple to produce a symbolic expression for a parameterized $\boldsymbol{K}$-matrix with an arbitrary number of poles and channels and play around with it interactively. For more info on the $\boldsymbol{K}$-matrix, see the classic paper by Chung {cite}`Chung:1995dx`, {pdg-review}`2021; Resonances`, or this instructive presentation {cite}`meyerMatrixTutorial2008`.
 #
 # Section {ref}`usage/dynamics/k-matrix:Physics` summarizes {cite}`Chung:1995dx`, so that the {mod}`.kmatrix` module can reference to the equations. It also points out some subtleties and deviations.
@@ -42,9 +45,10 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 # ```{autolink-skip}
 # ```
 
+# %%
 # %matplotlib widget
 
-# + jupyter={"source_hidden": true} mystnb={"code_prompt_show": "Import Python libraries"} tags=["hide-cell"]
+# %% jupyter={"source_hidden": true} mystnb={"code_prompt_show": "Import Python libraries"} tags=["hide-cell"]
 import logging
 import re
 import warnings
@@ -66,14 +70,14 @@ logging.basicConfig()
 logging.getLogger().setLevel(logging.ERROR)
 
 warnings.filterwarnings("ignore")
-# -
 
+# %% [markdown]
 # ## Physics
 
-# + [markdown] tags=["scroll-input"]
+# %% [markdown] tags=["scroll-input"]
 # The $\boldsymbol{K}$-matrix formalism is used to describe coupled, two-body **formation processes** of the form $c_j d_j \to R \to a_i b_i$, with $i,j$ representing each separate channel and $R$ an intermediate state by which these channels are coupled.
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 dot = """
 digraph {
     rankdir=LR;
@@ -95,14 +99,16 @@ digraph {
 }
 """
 graphviz.Source(dot)
-# -
 
+# %% [markdown]
 # A small adaptation allows us to describe a coupled, two-body **production process** of the form $R \to a_ib_i$ (see {ref}`usage/dynamics/k-matrix:Production processes`).
 #
 # In the following, $n$ denotes the number of channels and $n_R$ the number of poles. In the {mod}`.kmatrix` module, we use $0 \leq i,j < n$ and $1 \leq R \leq n_R$.
 
+# %% [markdown]
 # ### Partial wave expansion
 
+# %% [markdown]
 # In amplitude analysis, the main aim is to express the differential cross section $\frac{d\sigma}{d\Omega}$, that is, the intensity distribution in each spherical direction $\Omega=(\phi,\theta)$ as we can observe in experiments. This differential cross section can be expressed in terms of the **scattering amplitude** $A$:
 #
 # ```{margin}
@@ -129,8 +135,10 @@ graphviz.Source(dot)
 #
 # The above sketch is just with one channel in mind. The same holds true though for a number of channels $n$, with the only difference being that the $T$ operator becomes an $n\times n$ $\boldsymbol{T}$-matrix.
 
+# %% [markdown]
 # ### Transition operator
 
+# %% [markdown]
 # The important point is that we have now expressed $A$ in terms of an angular part (depending on $\Omega$) and a dynamical part $\boldsymbol{T}$ that depends on the {ref}`Mandelstam variable <pwa:introduction:Mandelstam variables>` $s$.
 #
 #
@@ -146,8 +154,10 @@ graphviz.Source(dot)
 #
 # with $\boldsymbol{I}$ the identity operator. Just like in {cite}`Chung:1995dx`, we use a factor 2, while other authors choose $\boldsymbol{S} = \boldsymbol{I} + i\boldsymbol{T}$. In that case, one would have to multiply Eq. {eq}`partial-wave-expansion` by a factor $\frac{1}{2}$.
 
+# %% [markdown]
 # ### Ensuring unitarity
 
+# %% [markdown]
 # Knowing the origin of the $\boldsymbol{T}$-matrix, there is an important restriction that we need to comply with when we further formulate a {ref}`parametrization <usage/dynamics/k-matrix:Pole parametrization>`: **unitarity**. This means that $\boldsymbol{S}$ should conserve probability, namely $\boldsymbol{S}^\dagger\boldsymbol{S} = \boldsymbol{I}$. Luckily, there is a trick that makes this easier. If we express $\boldsymbol{S}$ in terms of an operator $\boldsymbol{K}$ by applying a [Cayley transformation](https://en.wikipedia.org/wiki/Cayley_transform):
 #
 # ```{margin}
@@ -171,8 +181,10 @@ graphviz.Source(dot)
 # = \left(\boldsymbol{I} - i\boldsymbol{K}\right)^{-1} \boldsymbol{K}.
 # $$ (T-in-terms-of-K)
 
+# %% [markdown]
 # ### Lorentz-invariance
 
+# %% [markdown]
 # The description so far did not take Lorentz-invariance into account. For this, we first need to define a **two-body phase space matrix** $\boldsymbol{\rho}$:
 #
 # ```{margin}
@@ -215,11 +227,12 @@ graphviz.Source(dot)
 # = (\boldsymbol{I} - i\boldsymbol{\hat{K}}\boldsymbol{\rho})^{-1} \boldsymbol{\hat{K}}.
 # $$ (T-hat-in-terms-of-K-hat)
 
+# %% [markdown]
 # ### Production processes
 #
 # {ref}`As noted in the intro <usage/dynamics/k-matrix:Physics>`, the $\boldsymbol{K}$-matrix describes scattering processes of type $cd \to ab$. It can however be generalized to describe **production processes** of type $R \to ab$. Here, the amplitude is described by a **final state $F$-vector** of size $n$, so the question is how to express $F$ in terms of transition matrix $\boldsymbol{T}$.
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 dot = """
 digraph {
     rankdir=LR;
@@ -237,7 +250,7 @@ digraph {
 """
 graphviz.Source(dot)
 
-# + [markdown] tags=["scroll-input"]
+# %% [markdown] tags=["scroll-input"]
 # One approach by {cite}`Aitchison:1972ay` is to transform $\boldsymbol{T}$ into $F$ (and its relativistic form $\hat{F}$) through the **production amplitude $P$-vector**:
 #
 # ```{margin}
@@ -291,10 +304,11 @@ graphviz.Source(dot)
 # P=\sqrt{\boldsymbol{\rho}}\hat{P},\quad\mathrm{and}\quad
 # Q=\sqrt{\boldsymbol{\rho}^{-1}}\hat{Q}.
 # $$ (invariant-vectors)
-# -
 
+# %% [markdown]
 # ### Pole parametrization
 
+# %% [markdown]
 # After all these matrix definitions, the final challenge is to choose a correct parametrization for the elements of $\boldsymbol{K}$ and $P$ that accurately describes the resonances we observe.[^pole-vs-resonance] There are several choices, but a common one is the following summation over the **poles** $R$:[^complex-conjugate-parametrization]
 #
 # [^complex-conjugate-parametrization]: Eqs. (51) and (52) in {cite}`chungPrimerKmatrixFormalism1995` take a complex conjugate of one of the residue functions and one of the phase space factors.
@@ -327,6 +341,7 @@ graphviz.Source(dot)
 #
 # [^phase-space-factor-normalization]: Unlike Eq. (77) in {cite}`Chung:1995dx`, AmpForm defines {class}`.EnergyDependentWidth` as in {pdg-review}`2021; Resonances; p.6`, Eq. (50.28). The difference is that the phase space factor denoted by $\rho_i$ in Eq. (77) in {cite}`Chung:1995dx` is divided by the phase space factor at the pole position $m_R$. So in AmpForm, the choice is $\rho_i \to \frac{\rho_i(s)}{\rho_i(m_R)}$.
 
+# %% [markdown]
 # The production vector $P$ is commonly parameterized as:[^damping-factor-P-parametrization]
 #
 # ```{margin}
@@ -356,35 +371,45 @@ graphviz.Source(dot)
 # \beta^0_R = \beta_R\sqrt{m_R\Gamma^0_R}.
 # $$ (beta functions)
 
+# %% [markdown]
 # ## Implementation
 
+# %% [markdown]
 # ### Non-relativistic K-matrix
 
+# %% [markdown]
 # A non-relativistic $\boldsymbol{K}$-matrix for an arbitrary number of channels and an arbitrary number of poles can be formulated with the {meth}`.NonRelativisticKMatrix.formulate` method:
 
+# %%
 n_poles = sp.Symbol("n_R", integer=True, positive=True)
 k_matrix_nr = kmatrix.NonRelativisticKMatrix.formulate(n_poles=n_poles, n_channels=1)
 k_matrix_nr[0, 0]
 
+# %% [markdown]
 # Notice how the $\boldsymbol{K}$-matrix reduces to a {func}`.relativistic_breit_wigner` in the case of one channel and one pole (but for a residue constant $\gamma$):
 
+# %%
 k_matrix_1r = kmatrix.NonRelativisticKMatrix.formulate(n_poles=1, n_channels=1)
 k_matrix_1r[0, 0].doit().simplify()
 
+# %% [markdown]
 # Now let's investigate the effect of using a $\boldsymbol{K}$-matrix to describe **two poles** in one channel and see how it compares with the sum of two Breit-Wigner functions (two 'resonances'). Two Breit-Wigner 'poles' with the same parameters would look like this:
 
+# %%
 s, m1, m2, Gamma1, Gamma2 = sp.symbols("s m1 m2 Gamma1 Gamma2", nonnegative=True)
 bw1 = relativistic_breit_wigner(s, m1, Gamma1)
 bw2 = relativistic_breit_wigner(s, m2, Gamma2)
 bw = bw1 + bw2
 bw
 
+# %% [markdown]
 # while a $\boldsymbol{K}$-matrix parametrizes the two poles as:
 
+# %%
 k_matrix_2r = kmatrix.NonRelativisticKMatrix.formulate(n_poles=2, n_channels=1)
 k_matrix = k_matrix_2r[0, 0].doit()
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 # reformulate terms
 *rest, denominator, nominator = k_matrix.args
 term1 = nominator.args[0] * denominator * sp.Mul(*rest)
@@ -393,11 +418,10 @@ k_matrix = term1 + term2
 k_matrix
 
 
-# -
-
+# %% [markdown]
 # To simplify things, we can set the residue constants $\gamma$ to one. Notice how the $\boldsymbol{K}$-matrix has introduced some coupling ('interference') between the two terms.
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 def remove_residue_constants(expression):
     expression = symplot.substitute_indexed_symbols(expression)
     residue_constants = filter(
@@ -411,13 +435,13 @@ display(
     remove_residue_constants(bw),
     remove_residue_constants(k_matrix),
 )
-# -
 
+# %% [markdown]
 # Now, just like in {doc}`/usage/interactive`, we use {mod}`symplot` to visualize the difference between the two expressions. The important thing is that the Argand plot on the right shows that **the $\boldsymbol{K}$-matrix conserves unitarity**.
 #
 # Note that we have to call {func}`symplot.substitute_indexed_symbols` to turn the {class}`~sympy.tensor.indexed.Indexed` instances in this {obj}`~sympy.matrices.dense.Matrix` expression into {class}`~sympy.core.symbol.Symbol`s before calling this function. We also call {func}`symplot.rename_symbols` so that the residue $\gamma$'s get a name that does not have to be dummified by {func}`~sympy.utilities.lambdify.lambdify`.
 
-# + jupyter={"source_hidden": true} tags=["hide-input", "remove-output", "scroll-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input", "remove-output", "scroll-input"]
 # Prepare expressions
 m = sp.Symbol("m", nonnegative=True)
 k_matrix = symplot.substitute_indexed_symbols(k_matrix)
@@ -521,11 +545,11 @@ iplt.scatter(
     ax=ax_argand,
 )
 plt.legend(loc="upper right");
-# -
 
+# %% [markdown]
 # {{ run_interactive }}
 
-# + jupyter={"source_hidden": true} tags=["remove-input"]
+# %% jupyter={"source_hidden": true} tags=["remove-input"]
 if STATIC_WEB_PAGE:
     output_path = "non-relativistic-k-matrix.gif"
     ax_intensity.set_ylim([0, 2])
@@ -534,12 +558,14 @@ if STATIC_WEB_PAGE:
     controls.save_animation(output_path, fig, "m1", fps=20)
     with open(output_path, "rb") as f:
         display(Image(data=f.read(), format="png"))
-# -
 
+# %% [markdown]
 # ### Relativistic K-matrix
 
+# %% [markdown]
 # Relativistic $\boldsymbol{K}$-matrices for an arbitrary number of channels and an arbitrary number of poles can be formulated with the {meth}`.RelativisticKMatrix.formulate` method:
 
+# %%
 L = sp.Symbol("L", integer=True, negative=False)
 n_poles = sp.Symbol("n_R", integer=True, positive=True)
 rel_k_matrix_nr = kmatrix.RelativisticKMatrix.formulate(
@@ -547,23 +573,27 @@ rel_k_matrix_nr = kmatrix.RelativisticKMatrix.formulate(
 )
 rel_k_matrix_nr[0, 0]
 
+# %% [markdown]
 # Again, as in {ref}`usage/dynamics/k-matrix:Non-relativistic K-matrix`, the $\boldsymbol{K}$-matrix reduces to something of a {func}`.relativistic_breit_wigner`. This time, the width has been replaced by a {class}`.EnergyDependentWidth` and some {class}`.PhaseSpaceFactor`s have been inserted that take care of the decay into two decay products:
 
+# %%
 rel_k_matrix_1r = kmatrix.RelativisticKMatrix.formulate(
     n_poles=1, n_channels=1, angular_momentum=L
 )
 symplot.partial_doit(rel_k_matrix_1r[0, 0], sp.Sum).simplify(doit=False)
 
+# %% [markdown]
 # Note that another difference with {func}`.relativistic_breit_wigner_with_ff` is an additional phase space factor in the denominator. That one disappears in {ref}`usage/dynamics/k-matrix:P-vector`.
 #
 # The $\boldsymbol{K}$-matrix with two poles becomes (neglecting the $\sqrt{\rho_0(s)}$):
 
+# %%
 rel_k_matrix_2r = kmatrix.RelativisticKMatrix.formulate(
     n_poles=2, n_channels=1, angular_momentum=L
 )
 rel_k_matrix_2r = symplot.partial_doit(rel_k_matrix_2r[0, 0], sp.Sum)
 
-# + jupyter={"source_hidden": true} tags=["hide-input", "full-width"]
+# %% jupyter={"source_hidden": true} tags=["hide-input", "full-width"]
 rel_k_matrix_2r = symplot.substitute_indexed_symbols(rel_k_matrix_2r)
 s, m_a, m_b = sp.symbols("s, m_a0, m_b0", nonnegative=True)
 rho = PhaseSpaceFactor(s, m_a, m_b)
@@ -576,36 +606,45 @@ term1 = nominator.args[0] * denominator * sp.Mul(*rest)
 term2 = nominator.args[1] * denominator * sp.Mul(*rest)
 rel_k_matrix_2r = term1 + term2
 rel_k_matrix_2r
-# -
 
+# %% [markdown]
 # This again shows the interference introduced by the $\boldsymbol{K}$-matrix, when compared with a sum of two Breit-Wigner functions.
 
+# %% [markdown]
 # ### P-vector
 
+# %% [markdown]
 # For one channel and an arbitrary number of poles $n_R$, the $F$-vector gets the following form:
 
+# %%
 n_poles = sp.Symbol("n_R", integer=True, positive=True)
 kmatrix.NonRelativisticPVector.formulate(n_poles=n_poles, n_channels=1)[0]
 
+# %% [markdown]
 # The {class}`.RelativisticPVector` looks like:
 
+# %%
 kmatrix.RelativisticPVector.formulate(
     n_poles=n_poles, n_channels=1, angular_momentum=L
 )[0]
 
+# %% [markdown]
 # As in {ref}`usage/dynamics/k-matrix:Non-relativistic K-matrix`, if we take $n_R=1$, the $F$-vector reduces to a Breit-Wigner function, but now with an additional factor $\beta$.
 
+# %%
 f_vector_1r = kmatrix.NonRelativisticPVector.formulate(n_poles=1, n_channels=1)
 symplot.partial_doit(f_vector_1r[0], sp.Sum)
 
+# %% [markdown]
 # And when we neglect the phase space factors $\sqrt{\rho_0(s)}$, the {class}`.RelativisticPVector` reduces to a {func}`.relativistic_breit_wigner_with_ff`!
 
+# %%
 rel_f_vector_1r = kmatrix.RelativisticPVector.formulate(
     n_poles=1, n_channels=1, angular_momentum=L
 )
 rel_f_vector_1r = symplot.partial_doit(rel_f_vector_1r[0], sp.Sum)
 
-# + jupyter={"source_hidden": true} tags=["hide-input", "full-width"]
+# %% jupyter={"source_hidden": true} tags=["hide-input", "full-width"]
 rel_f_vector_1r = symplot.substitute_indexed_symbols(rel_f_vector_1r)
 s, m_a, m_b = sp.symbols("s, m_a0, m_b0", nonnegative=True)
 rho = PhaseSpaceFactor(s, m_a, m_b)
@@ -613,35 +652,36 @@ rel_f_vector_1r.xreplace({
     sp.sqrt(rho): 1,
     sp.conjugate(sp.sqrt(rho)): 1,
 }).simplify(doit=False)
-# -
 
+# %% [markdown]
 # Note that the $F$-vector approach introduces additional $\beta$-coefficients. These can constants can be complex and can introduce phase differences form the production process.
 
+# %%
 f_vector_2r = kmatrix.NonRelativisticPVector.formulate(n_poles=2, n_channels=1)
 f_vector = f_vector_2r[0].doit()
 
-# + jupyter={"source_hidden": true} tags=["hide-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input"]
 *rest, denominator, nominator = f_vector.args
 term1 = nominator.args[0] * denominator * sp.Mul(*rest)
 term2 = nominator.args[1] * denominator * sp.Mul(*rest)
 f_vector = term1 + term2
 f_vector
-# -
 
+# %% [markdown]
 # Now again let's compare the compare this with a sum of two {func}`.relativistic_breit_wigner`s, now with the two additional $\beta$-constants.
 
-# + jupyter={"source_hidden": true}
+# %% jupyter={"source_hidden": true}
 beta1, beta2 = sp.symbols("beta1 beta2", nonnegative=True)
 bw_with_phases = beta1 * bw1 + beta2 * bw2
 display(
     bw_with_phases,
     remove_residue_constants(f_vector),
 )
-# -
 
+# %% [markdown]
 # {{ run_interactive }}
 
-# + jupyter={"source_hidden": true} tags=["hide-input", "remove-output", "scroll-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-input", "remove-output", "scroll-input"]
 # Prepare expressions
 f_vector = symplot.substitute_indexed_symbols(f_vector)
 rename_gammas = lambda s: re.sub(  # noqa: E731
@@ -909,20 +949,22 @@ ui = ipywidgets.VBox(h_boxes + remaining_sliders)
 output = ipywidgets.interactive_output(plot3, controls=sliders)
 display(ui, output)
 
-# + jupyter={"source_hidden": true} tags=["remove-input", "full-width"]
+# %% jupyter={"source_hidden": true} tags=["remove-input", "full-width"]
 if STATIC_WEB_PAGE:
     output_path = "p-vector-comparison.png"
     plt.savefig(output_path, dpi=150)
     display(Image(output_path))
-# -
 
+# %% [markdown]
 # ## Interactive visualization
 
+# %% [markdown]
 # All $\boldsymbol{K}$-matrices can be inspected interactively for arbitrary poles and channels with the following applet:
 
+# %% [markdown]
 # [^pole-vs-resonance]: See {pdg-review}`2021; Resonances`, Section 50.1, for a discussion about what poles and resonances are. See also the intro to Section 5 in {cite}`Chung:1995dx`.
 
-# + jupyter={"source_hidden": true} tags=["hide-cell", "scroll-input"]
+# %% jupyter={"source_hidden": true} tags=["hide-cell", "scroll-input"]
 if STATIC_WEB_PAGE:
     L = 0
 
@@ -1230,11 +1272,10 @@ def plot(
     display(ui, output)
 
 
-# -
-
+# %% [markdown]
 # {{ run_interactive }}
 
-# + tags=["remove-output"]
+# %% tags=["remove-output"]
 plot(
     kmatrix.RelativisticKMatrix,
     n_poles=2,
@@ -1244,7 +1285,7 @@ plot(
     substitute_sqrt_rho=False,
 )
 
-# + jupyter={"source_hidden": true} tags=["full-width", "remove-input"]
+# %% jupyter={"source_hidden": true} tags=["full-width", "remove-input"]
 if STATIC_WEB_PAGE:
     output_path = "k-matrix.png"
     plt.savefig(output_path, dpi=150)
