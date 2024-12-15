@@ -114,6 +114,7 @@
     "isinstance",
     "jpsi",
     "jupyterlab",
+    "jupytext",
     "katex",
     "kernelspec",
     "kmatrix",
