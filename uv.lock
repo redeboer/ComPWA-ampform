@@ -59,6 +59,7 @@ dev = [
     { name = "jupyterlab-git" },
     { name = "jupyterlab-lsp" },
     { name = "jupyterlab-myst" },
+    { name = "jupytext" },
     { name = "matplotlib" },
     { name = "mpl-interactions" },
     { name = "mypy" },
@@ -116,6 +117,7 @@ jupyter = [
     { name = "jupyterlab-git" },
     { name = "jupyterlab-lsp" },
     { name = "jupyterlab-myst" },
+    { name = "jupytext" },
     { name = "python-lsp-ruff" },
     { name = "python-lsp-server", extra = ["rope"] },
 ]
@@ -180,6 +182,7 @@ dev = [
     { name = "jupyterlab-git" },
     { name = "jupyterlab-lsp" },
     { name = "jupyterlab-myst" },
+    { name = "jupytext" },
     { name = "matplotlib" },
     { name = "matplotlib", specifier = "<3.9.0" },
     { name = "mpl-interactions" },
@@ -241,6 +244,7 @@ jupyter = [
     { name = "jupyterlab-git" },
     { name = "jupyterlab-lsp" },
     { name = "jupyterlab-myst" },
+    { name = "jupytext" },
     { name = "python-lsp-ruff" },
     { name = "python-lsp-server", extras = ["rope"] },
 ]
@@ -1614,6 +1618,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/59/73/fa26bbb747a9ea4fca6b01453aa22990d52ab62dd61384f1ac0dc9d4e7ba/jupyterlab_widgets-3.0.13.tar.gz", hash = "sha256:a2966d385328c1942b683a8cd96b89b8dd82c8b8f81dda902bb2bc06d46f5bed", size = 203556 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a9/93/858e87edc634d628e5d752ba944c2833133a28fa87bb093e6832ced36a3e/jupyterlab_widgets-3.0.13-py3-none-any.whl", hash = "sha256:e3cda2c233ce144192f1e29914ad522b2f4c40e77214b0cc97377ca3d323db54", size = 214392 },
+]
+
+[[package]]
+name = "jupytext"
+version = "1.16.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py" },
+    { name = "mdit-py-plugins" },
+    { name = "nbformat" },
+    { name = "packaging" },
+    { name = "pyyaml" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a1/ba/81097573072b165772b71298c339d5da46dfeec53c1c354ce282109967ea/jupytext-1.16.4.tar.gz", hash = "sha256:28e33f46f2ce7a41fb9d677a4a2c95327285579b64ca104437c4b9eb1e4174e9", size = 3724368 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/a3/285eb1e79dbbd8e9513a3bb1bb2bb3d4c7c22c8a92efb8449baface0b864/jupytext-1.16.4-py3-none-any.whl", hash = "sha256:76989d2690e65667ea6fb411d8056abe7cd0437c07bd774660b83d62acf9490a", size = 153540 },
 ]
 
 [[package]]
