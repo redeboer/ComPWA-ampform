@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,8 +24,8 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Custom dynamics
 
@@ -82,7 +82,6 @@ print(inspect.getsource(create_relativistic_breit_wigner))
 ```
 
 A function that behaves like a {class}`.ResonanceDynamicsBuilder` should return a {class}`tuple` of some {class}`~sympy.core.expr.Expr` (which formulates your lineshape) and a {class}`dict` of {class}`~sympy.core.symbol.Symbol`s to some suggested initial values. This signature is required so the builder knows how to extract the correct symbol names and their suggested initial values from a {class}`~qrules.topology.Transition`.
-
 
 The {class}`~sympy.core.expr.Expr` you use for the lineshape can be anything. Here, we use a Gaussian function and wrap it in a function. As you can see, this function stands on its own, independent of {mod}`ampform`:
 

@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,8 +24,8 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Kinematics
 
@@ -37,7 +37,6 @@ from ampform.io import aslatex
 ```
 
 ## Lorentz vectors
-
 
 AmpForm provides classes for formulating symbolic expressions for boosting and rotating Lorentz vectors. Usually, when building an amplitude model, you don't have to use these classes, but sometimes you want to boost some four-momenta yourself (for instance to boost into the center-of-mass frame of your experiment. Here, we boost a four-momentum $q$ from the lab frame of the BESIII detector into the center-of-mass frame $p$ of the $e^-e^+$&nbsp;collision. Symbolically, this looks like this:
 
@@ -115,14 +114,13 @@ px_array = np.array([[3.0971, 30e-3, 0, 0]])  # x direction!
 B_func(px_array, q_array)
 ```
 
-And again,  $B(p) p = \left(m_{J/\psi}, 0, 0, 0\right)$:
+And again, $B(p) p = \left(m_{J/\psi}, 0, 0, 0\right)$:
 
 ```python
 B_func(px_array, px_array)
 ```
 
 ## Phase space
-
 
 :::{margin}
 This notebook originates from {doc}`compwa-report:017/index`.
@@ -146,12 +144,13 @@ Math(latex)
 ```
 
 <!-- #region -->
-The phase space is defined by the closed area that satisfies the condition $\phi(\sigma_1,\sigma_2) \leq 0$, where $\phi$ is a **Kibble function**:
 
+The phase space is defined by the closed area that satisfies the condition $\phi(\sigma_1,\sigma_2) \leq 0$, where $\phi$ is a **Kibble function**:
 
 ```{margin}
 See §V.2 in {cite}`Byckling:1971vca`
 ```
+
 <!-- #endregion -->
 
 ```python jupyter={"source_hidden": true} tags=["hide-input"]

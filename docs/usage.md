@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,17 +24,14 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Usage
 
-
 ## Overview
 
-
 ### Library of symbolic dynamics functions
-
 
 AmpForm offers a number of dynamics parametrization functions. The functions are expressed with {mod}`sympy`, so that they can easily be visualized, simplified, or modified:
 
@@ -91,9 +88,7 @@ matrix[0, 0].doit().simplify()
 
 More dynamics functions can be found in the {mod}`.dynamics` library, as well as on the {doc}`/usage/dynamics` page!
 
-
 ### Formulate amplitude models
-
 
 Together with [QRules](https://qrules.rtfd.io), AmpForm can automatically formulate amplitude models for generic, multi-body decays. These models can then be used as templates for faster computational back-ends with [TensorWaves](https://tensorwaves.rtfd.io). Here's an example:
 
@@ -154,9 +149,7 @@ model.intensity
 
 ## Advanced examples
 
-
 The following pages provide more advanced examples of how to use AmpForm. You can run each of them as Jupyter notebooks with the {fa}`rocket` launch button in the top-right corner.
-
 
 ```{toctree}
 ---

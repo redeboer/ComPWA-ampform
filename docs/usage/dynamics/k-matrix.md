@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,14 +24,12 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # K-matrix
 
-
 <!-- cspell:ignore amma -->
-
 
 While {mod}`ampform` does not yet provide a generic way to formulate an amplitude model with $\boldsymbol{K}$-matrix dynamics, the (experimental) {mod}`.kmatrix` module makes it fairly simple to produce a symbolic expression for a parameterized $\boldsymbol{K}$-matrix with an arbitrary number of poles and channels and play around with it interactively. For more info on the $\boldsymbol{K}$-matrix, see the classic paper by Chung {cite}`Chung:1995dx`, {pdg-review}`2021; Resonances`, or this instructive presentation {cite}`meyerMatrixTutorial2008`.
 
@@ -44,6 +42,7 @@ The $\boldsymbol{K}$-matrix approach was originally worked worked out in {doc}`c
 :::
 
 ```{autolink-skip}
+
 ```
 
 ```python
@@ -77,7 +76,9 @@ warnings.filterwarnings("ignore")
 ## Physics
 
 <!-- #region tags=["scroll-input"] -->
+
 The $\boldsymbol{K}$-matrix formalism is used to describe coupled, two-body **formation processes** of the form $c_j d_j \to R \to a_i b_i$, with $i,j$ representing each separate channel and $R$ an intermediate state by which these channels are coupled.
+
 <!-- #endregion -->
 
 ```python jupyter={"source_hidden": true} tags=["hide-input"]
@@ -108,9 +109,7 @@ A small adaptation allows us to describe a coupled, two-body **production proces
 
 In the following, $n$ denotes the number of channels and $n_R$ the number of poles. In the {mod}`.kmatrix` module, we use $0 \leq i,j < n$ and $1 \leq R \leq n_R$.
 
-
 ### Partial wave expansion
-
 
 In amplitude analysis, the main aim is to express the differential cross section $\frac{d\sigma}{d\Omega}$, that is, the intensity distribution in each spherical direction $\Omega=(\phi,\theta)$ as we can observe in experiments. This differential cross section can be expressed in terms of the **scattering amplitude** $A$:
 
@@ -128,9 +127,13 @@ We can now further express $A$ in terms of **partial wave amplitudes** by expand
 {cite}`Chung:1995dx` Eq. (2)
 ```
 
+
 $$
-A(\Omega) = \frac{1}{q_i}\sum_L\left(2L+1\right) T_L(s) {D^{*L}_{\lambda\mu}}\left(\phi,\theta,0\right)
-$$ (partial-wave-expansion)
+
+A(\Omega) = \frac{1}{q*i}\sum_L\left(2L+1\right) T_L(s) {D^{\*L}*{\lambda\mu}}\left(\phi,\theta,0\right)
+
+$$
+(partial-wave-expansion)
 
 with $L$ the total angular momentum of the decay product pair, $\lambda=\lambda_a-\lambda_b$ and $\mu=\lambda_c-\lambda_d$ the helicity differences of the final and initial states, $D$ a [Wigner-$D$ function](https://en.wikipedia.org/wiki/Wigner_D-matrix), and $T_J$ an operator representing the partial wave amplitude.
 
@@ -151,9 +154,13 @@ The dynamical part $\boldsymbol{T}$ is usually called the **transition operator*
 {cite}`Chung:1995dx` Eq. (10)
 ```
 
+
 $$
+
 \boldsymbol{S} = \boldsymbol{I} + 2i\boldsymbol{T}
-$$ (S in terms of T)
+
+$$
+(S in terms of T)
 
 with $\boldsymbol{I}$ the identity operator. Just like in {cite}`Chung:1995dx`, we use a factor 2, while other authors choose $\boldsymbol{S} = \boldsymbol{I} + i\boldsymbol{T}$. In that case, one would have to multiply Eq. {eq}`partial-wave-expansion` by a factor $\frac{1}{2}$.
 <!-- #endregion -->
@@ -167,9 +174,13 @@ Knowing the origin of the $\boldsymbol{T}$-matrix, there is an important restric
 {cite}`Chung:1995dx` Eq. (20)
 ```
 
+
 $$
+
 \boldsymbol{S} = (\boldsymbol{I} + i\boldsymbol{K})(I - i\boldsymbol{K})^{-1},
-$$ (Cayley transformation)
+
+$$
+(Cayley transformation)
 
 _unitarity is conserved if $\boldsymbol{K}$ is real_. With some matrix jumbling, we can derive that the $\boldsymbol{T}$-matrix can be expressed in terms of $\boldsymbol{K}$ as follows:
 
@@ -178,11 +189,15 @@ _unitarity is conserved if $\boldsymbol{K}$ is real_. With some matrix jumbling,
 compare with {eq}`T-hat-in-terms-of-K-hat`
 ```
 
+
 $$
+
 \boldsymbol{T}
 = \boldsymbol{K} \left(\boldsymbol{I} - i\boldsymbol{K}\right)^{-1}
 = \left(\boldsymbol{I} - i\boldsymbol{K}\right)^{-1} \boldsymbol{K}.
-$$ (T-in-terms-of-K)
+
+$$
+(T-in-terms-of-K)
 
 
 ### Lorentz-invariance
@@ -194,13 +209,17 @@ The description so far did not take Lorentz-invariance into account. For this, w
 {cite}`Chung:1995dx` Eq. (36)
 ```
 
+
 $$
+
 \boldsymbol{\rho} = \begin{pmatrix}
-\rho_0 & \cdots & 0      \\
+\rho*0 & \cdots & 0 \\
 \vdots & \ddots & \vdots \\
-0      & \cdots & \rho_{n-1}
+0 & \cdots & \rho*{n-1}
 \end{pmatrix}.
-$$ (rho matrix)
+
+$$
+(rho matrix)
 
 with $\rho_i$ given by {eq}`PhaseSpaceFactor` in {class}`.PhaseSpaceFactor` for the final state masses $m_{a,i}, m_{b,i}$. The **Lorentz-invariant amplitude $\boldsymbol{\hat{T}}$** and corresponding Lorentz-invariant $\boldsymbol{\hat{K}}$-matrix can then be computed from $\boldsymbol{T}$ and $\boldsymbol{K}$ with:[^rho-dagger]
 
@@ -208,12 +227,16 @@ with $\rho_i$ given by {eq}`PhaseSpaceFactor` in {class}`.PhaseSpaceFactor` for 
 {cite}`Chung:1995dx` Eqs. (34) and (47)
 ```
 
+
 $$
+
 \begin{eqnarray}
 \boldsymbol{T} & = & \sqrt{\boldsymbol{\rho}} \; \boldsymbol{\hat{T}} \sqrt{\boldsymbol{\rho}} \\
 \boldsymbol{K} & = & \sqrt{\boldsymbol{\rho}} \; \boldsymbol{\hat{K}} \sqrt{\boldsymbol{\rho}}.
 \end{eqnarray}
-$$ (K-hat-and-T-hat)
+
+$$
+(K-hat-and-T-hat)
 
 [^rho-dagger]: An unpublished primer on the $\boldsymbol{K}$-matrix by Chung {cite}`chungPrimerKmatrixFormalism1995` uses a conjugate transpose of $\boldsymbol{\rho}$, e.g. $\boldsymbol{T} = \sqrt{\boldsymbol{\rho^\dagger}} \; \boldsymbol{\hat{T}} \sqrt{\boldsymbol{\rho}}$. This should not matter above threshold, where the phase space factor is real, but could have effects below threshold. This is where things become tricky: on the one hand, we need to ensure that $\boldsymbol{K}$ remains real (unitarity) and on the other, we need to take keep track of which imaginary square root we choose (**Riemann sheet**). The latter is often called the requirement of **analyticity**. This is currently being explored in {doc}`compwa-report:003/index` and {doc}`compwa-report:004/index`.
 
@@ -224,11 +247,15 @@ With these definitions, we can deduce that:
 compare with {eq}`T-in-terms-of-K`
 ```
 
+
 $$
+
 \boldsymbol{\hat{T}}
 = \boldsymbol{\hat{K}} (\boldsymbol{I} - i\boldsymbol{\rho}\boldsymbol{\hat{K}})^{-1}
 = (\boldsymbol{I} - i\boldsymbol{\hat{K}}\boldsymbol{\rho})^{-1} \boldsymbol{\hat{K}}.
-$$ (T-hat-in-terms-of-K-hat)
+
+$$
+(T-hat-in-terms-of-K-hat)
 
 
 ### Production processes
@@ -261,18 +288,26 @@ One approach by {cite}`Aitchison:1972ay` is to transform $\boldsymbol{T}$ into $
 {cite}`Chung:1995dx` Eqs. (114) and (115)
 ```
 
+
 $$
+
 \begin{eqnarray}
 F & = & \left(\boldsymbol{I}-i\boldsymbol{K}\right)^{-1}P \\
 \hat{F} & = & \left(\boldsymbol{I}-i\boldsymbol{\hat{K}\boldsymbol{\rho}}\right)^{-1}\hat{P},
 \end{eqnarray}
-$$ (F-in-terms-of-P)
+
+$$
+(F-in-terms-of-P)
 
 where we can compute $\boldsymbol{\hat{K}}$ from {eq}`K-hat-and-T-hat`:
 
+
 $$
+
 \hat{\boldsymbol{K}} = \sqrt{\boldsymbol{\rho}^{-1}} \boldsymbol{K} \sqrt{\boldsymbol{\rho}^{-1}}.
-$$ (K-hat in terms of K)
+
+$$
+(K-hat in terms of K)
 
 Another approach by {cite}`Cahn:1985wu` further approximates this by defining a **$Q$-vector**:
 
@@ -280,10 +315,14 @@ Another approach by {cite}`Cahn:1985wu` further approximates this by defining a 
 {cite}`Chung:1995dx` Eq. (124)
 ```
 
+
 $$
+
 Q = \boldsymbol{K}^{-1}P \quad \mathrm{and} \quad
 \hat{Q} = \boldsymbol{\hat{K}}^{-1}\hat{P}
-$$ (Q-vector)
+
+$$
+(Q-vector)
 
 that _is taken to be constant_ (just some 'fitting' parameters). The $F$-vector can then be expressed as:
 
@@ -291,11 +330,15 @@ that _is taken to be constant_ (just some 'fitting' parameters). The $F$-vector 
 {cite}`Chung:1995dx` Eq. (125)
 ```
 
+
 $$
+
 F = \boldsymbol{T}Q
 \quad \mathrm{and} \quad
 \hat{F} = \boldsymbol{\hat{T}}\hat{Q}
-$$ (F in terms of Q)
+
+$$
+(F in terms of Q)
 
 Note that for all these vectors, we have:
 
@@ -303,11 +346,15 @@ Note that for all these vectors, we have:
 {cite}`Chung:1995dx` Eqs. (116) and (124)
 ```
 
+
 $$
+
 F=\sqrt{\boldsymbol{\rho}}\hat{F},\quad
 P=\sqrt{\boldsymbol{\rho}}\hat{P},\quad\mathrm{and}\quad
 Q=\sqrt{\boldsymbol{\rho}^{-1}}\hat{Q}.
-$$ (invariant-vectors)
+
+$$
+(invariant-vectors)
 <!-- #endregion -->
 
 ### Pole parametrization
@@ -321,12 +368,16 @@ After all these matrix definitions, the final challenge is to choose a correct p
 {cite}`Chung:1995dx` Eqs. (73) and (74)
 ```
 
+
 $$
+
 \begin{eqnarray}
-K_{ij} &=& \sum_R\frac{g_{R,i}g_{R,j}}{m_R^2-s} + c_{ij} \\
-\hat{K}_{ij} &=& \sum_R \frac{g_{R,i}(s)g_{R,j}(s)}{\left(m_R^2-s\right)\sqrt{\rho_i\rho_j}} + \hat{c}_{ij}
+K*{ij} &=& \sum_R\frac{g*{R,i}g*{R,j}}{m_R^2-s} + c*{ij} \\
+\hat{K}_{ij} &=& \sum_R \frac{g_{R,i}(s)g*{R,j}(s)}{\left(m_R^2-s\right)\sqrt{\rho_i\rho_j}} + \hat{c}*{ij}
 \end{eqnarray}
-$$ (K-matrix parametrization)
+
+$$
+(K-matrix parametrization)
 
 with $c_{ij}, \hat{c}_{ij}$ some optional background characterization and $g_{R,i}$ the **residue functions**. The residue functions are often further expressed as:
 
@@ -334,12 +385,16 @@ with $c_{ij}, \hat{c}_{ij}$ some optional background characterization and $g_{R,
 {cite}`Chung:1995dx` Eqs. (75-78)
 ```
 
+
 $$
+
 \begin{eqnarray}
-g_{R,i} &=& \gamma_{R,i}\sqrt{m_R\Gamma^0_{R,i}} \\
-g_{R,i}(s) &=& \gamma_{R,i}\sqrt{m_R\Gamma_{R,i}(s)}
+g*{R,i} &=& \gamma*{R,i}\sqrt{m*R\Gamma^0*{R,i}} \\
+g*{R,i}(s) &=& \gamma*{R,i}\sqrt{m*R\Gamma*{R,i}(s)}
 \end{eqnarray}
-$$ (residue-function)
+
+$$
+(residue-function)
 
 with $\gamma_{R,i}$ some _real_ constants and $\Gamma^0_{R,i}$ the **partial width** of each pole. In the Lorentz-invariant form, the fixed width $\Gamma^0$ is replaced by an "energy dependent" {class}`.EnergyDependentWidth` $\Gamma(s)$.[^phase-space-factor-normalization] The **width** for each pole can be computed as $\Gamma^0_R = \sum_i\Gamma^0_{R,i}$.
 
@@ -352,16 +407,20 @@ The production vector $P$ is commonly parameterized as:[^damping-factor-P-parame
 {cite}`Chung:1995dx` Eqs. (118-119) and (122)
 ```
 
+
 $$
+
 \begin{eqnarray}
-P_i &=& \sum_R \frac{\beta^0_R\,g_{R,i}(s)}{m_R^2-s} \\
-\hat{P}_i
-&=& \sum_R \frac{\beta^0_R\,g_{R,i}(s)}{\left(m_R^2-s\right)\sqrt{\rho_i}} \\
+P*i &=& \sum_R \frac{\beta^0_R\,g*{R,i}(s)}{m*R^2-s} \\
+\hat{P}\_i
+&=& \sum_R \frac{\beta^0_R\,g*{R,i}(s)}{\left(m*R^2-s\right)\sqrt{\rho_i}} \\
 &=& \sum_R \frac{
-    \beta^0_R\gamma_{R,i}m_R\Gamma^0_R B_{R,i}(q(s))
+\beta^0_R\gamma*{R,i}m*R\Gamma^0_R B*{R,i}(q(s))
 }{m_R^2-s}
 \end{eqnarray}
-$$ (P-vector parametrization)
+
+$$
+(P-vector parametrization)
 
 with $B_{R,i}(q(s))$ the **centrifugal damping factor** (see {class}`.FormFactor` and {class}`.BlattWeisskopfSquared`) for channel $i$ and $\beta_R^0$ some (generally complex) constants that describe the production information of the decaying state $R$. Usually, these constants are rescaled just like the residue functions in {eq}`residue-function`:
 
@@ -371,9 +430,13 @@ with $B_{R,i}(q(s))$ the **centrifugal damping factor** (see {class}`.FormFactor
 {cite}`Chung:1995dx` Eq. (121)
 ```
 
+
 $$
+
 \beta^0_R = \beta_R\sqrt{m_R\Gamma^0_R}.
-$$ (beta functions)
+
+$$
+(beta functions)
 
 
 ## Implementation
@@ -1299,3 +1362,4 @@ if STATIC_WEB_PAGE:
     plt.savefig(output_path, dpi=150)
     display(Image(output_path))
 ```
+$$

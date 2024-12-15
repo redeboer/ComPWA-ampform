@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,17 +24,14 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # SymPy helper functions
 
-
 The {mod}`ampform.sympy` module contains a few classes that make it easier to construct larger expressions that consist of several mathematical definitions.
 
-
 ## Unevaluated expressions
-
 
 The {func}`.unevaluated` decorator makes it easier to write classes that represent a mathematical function definition. It makes a class that derives from {class}`sp.Expr <sympy.core.expr.Expr>` behave more like a {func}`~.dataclasses.dataclass` (see [PEP&nbsp;861](https://peps.python.org/pep-0681)). All you have to do is:
 
@@ -91,7 +88,6 @@ class PhspFactorSWave(sp.Expr):
 :::{note}
 For illustrative purposes, the phase space factor defines `_latex_repr_()` [as a printer method](https://docs.sympy.org/latest/modules/printing.html#example-of-custom-printing-method). It is recommended to do so only if rendering the expression class as $\LaTeX$ requires more logics. The disadvantage of defining `_latex_repr_()` as a method is that it requires more boilerplate code, such as explicitly converting the symbolic {attr}`~sympy.core.basic.Basic.args` of the expression class first. In this phase space factor, defining `_latex_repr_` as a {class}`str` would have been just fine.
 :::
-
 
 As can be seen, the LaTeX rendering of these classes makes them ideal for mathematically defining and building up larger amplitude models:
 
@@ -183,9 +179,7 @@ Math(aslatex({expr: expr.doit()}))
 An example where this is used, is in the {class}`.EnergyDependentWidth` class, where we do not want to sympify the {attr}`~.EnergyDependentWidth.phsp_factor` protocol.
 :::
 
-
 ## Numerical integrals
-
 
 In hadron physics and high-energy physics, it often happens that models contain integrals that do not have an analytical solution.. They can arise in theoretical models, complex scattering problems, or in the analysis of experimental data. In such cases, we need to resort to numerical integrations.
 
@@ -274,7 +268,6 @@ integral_func(
 ```
 
 ## Summations
-
 
 The {class}`.PoolSum` class makes it possible to write sums over non-integer ranges. This is for instance useful when summing over allowed helicities. Here are some examples:
 

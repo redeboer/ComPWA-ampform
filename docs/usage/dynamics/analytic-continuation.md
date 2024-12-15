@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,11 +24,10 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
+
 ```
 
-
 # Analytic continuation
-
 
 :::{note}
 
@@ -36,12 +35,9 @@ Improvements to analytic continuation in AmpForm are currently being developed i
 
 :::
 
-
-Analytic continuation allows one to handle resonances just below threshold ($m_0 < m_a + m_b$  in Eq. {eq}`relativistic_breit_wigner_with_ff`). In practice, this entails using a specific function for $\rho$ in Eq. {eq}`EnergyDependentWidth`.
-
+Analytic continuation allows one to handle resonances just below threshold ($m_0 < m_a + m_b$ in Eq. {eq}`relativistic_breit_wigner_with_ff`). In practice, this entails using a specific function for $\rho$ in Eq. {eq}`EnergyDependentWidth`.
 
 ## Definitions
-
 
 Three usual choices for $\rho$ are the following:
 
@@ -60,7 +56,6 @@ warnings.filterwarnings("ignore")
 
 ### 1) Break-up momentum
 
-
 The {func}`~sympy.functions.elementary.miscellaneous.sqrt` or {class}`.ComplexSqrt` of {class}`.BreakupMomentumSquared`:
 
 ```python
@@ -73,7 +68,6 @@ Math(aslatex({q_squared: q_squared.evaluate()}))
 
 ### 2) 'Normal' phase space factor
 
-
 The 'normal' {class}`.PhaseSpaceFactor` (the denominator makes the difference to {eq}`EnergyDependentWidth`!):
 
 ```python
@@ -85,7 +79,6 @@ Math(aslatex({rho: rho.evaluate()}))
 
 ### 3) 'Complex' phase space factor
 
-
 A {class}`.PhaseSpaceFactorComplex` that uses {class}`.ComplexSqrt`:
 
 ```python
@@ -96,7 +89,6 @@ Math(aslatex({rho_c: rho_c.evaluate()}))
 ```
 
 ### 4) 'Analytic continuation' of the phase space factor
-
 
 The following 'case-by-case' **analytic continuation** for decay products with an _equal_ mass, {class}`.EqualMassPhaseSpaceFactor`:
 
@@ -118,9 +110,7 @@ Math(aslatex({rho_hat: rho_hat.evaluate()}))
 
 (Mind the absolute value.)
 
-
 ### 5) Chew-Mandelstam for $S$-waves
-
 
 A {class}`.PhaseSpaceFactorSWave` that uses {func}`.chew_mandelstam_s_wave`:
 
@@ -133,8 +123,8 @@ Math(aslatex({rho_cm: rho_cm.evaluate()}))
 
 ## Visualization
 
-
 ```{autolink-skip}
+
 ```
 
 ```python

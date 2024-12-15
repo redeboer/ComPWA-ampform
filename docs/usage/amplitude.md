@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,8 +24,8 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Formulate amplitude model
 
@@ -41,7 +41,6 @@ improve_latex_rendering()
 ```
 
 ## Generate transitions
-
 
 In {doc}`qrules:usage/reaction`, we used {func}`~qrules.generate_transitions` to create a list of allowed {class}`~qrules.topology.Transition`s for a specific decay channel:
 
@@ -66,7 +65,6 @@ graphviz.Source(dot)
 
 ## Build model
 
-
 We can now use the {class}`~qrules.transition.ReactionInfo` to formulate an amplitude model. The type of this amplitude model is dependent on the {attr}`~qrules.transition.ReactionInfo.formalism`. The function {func}`.get_builder` helps to get the correct amplitude builder class for this {attr}`~qrules.transition.ReactionInfo.formalism`:
 
 ```python
@@ -86,9 +84,7 @@ model_no_dynamics = model_builder.formulate()
 
 :::
 
-
 ### Main expressions
-
 
 A {class}`.HelicityModel` has a few attributes. The expression for the total intensity is given by {attr}`.intensity`:
 
@@ -127,7 +123,6 @@ some_amplitude.doit()
 
 ### Parameters and kinematic variables
 
-
 As can be seen, the expression contains several {class}`~sympy.core.symbol.Symbol`s. Some of these represent (kinematic) **variables**, such as the helicity angles $\phi_0$ and $\theta_0$ (see {func}`.get_helicity_angle_symbols` for the meaning of their subscripts). Others will later on be interpreted **parameters** when fitting the model to data.
 
 The {class}`.HelicityModel` comes with expressions for these {attr}`~.HelicityModel.kinematic_variables`, so that it's possible to compute them from 4-momentum data.
@@ -155,7 +150,6 @@ Math(aslatex(model_no_dynamics.parameter_defaults))
 
 #### Helicity couplings
 
-
 If you prefer to characterize the strength of each partial _two-body_ decay, set {attr}`~.BuilderConfiguration.use_helicity_couplings` to {obj}`True` and formulate a model:
 
 ```python
@@ -169,7 +163,9 @@ model_builder.config.use_helicity_couplings = False
 ```
 
 <!-- #region jp-MarkdownHeadingCollapsed=true -->
+
 #### Scalar masses
+
 <!-- #endregion -->
 
 By default, the {class}`.HelicityAmplitudeBuilder` creates {class}`sympy.Expr <sympy.core.expr.Expr>`s for each kinematic variable, including all 'invariant' final state masses ($m_0, m_1, \dots$). However, it often happens that certain particles in a final state are stable. In that case, you may want to substitute these symbols with _scalar_ values. This can be achieved by specifying which final state IDs are to be considered _stable_. Their corresponding mass symbols will then be considered parameters and a scalar suggested parameter value will be provided.
@@ -199,7 +195,6 @@ Math(aslatex(model_stable_masses.parameter_defaults))
 ```
 
 #### Extend kinematic variables
-
 
 The {class}`.HelicityAmplitudeBuilder` by default only generates {attr}`.kinematic_variables` (helicity angles and invariant masses) for the topologies that are available in the {class}`~qrules.transition.ReactionInfo` object that it was created with. If you want to calculate more kinematic variables, you can use the method {meth}`.register_topology` of its helicity {attr}`.HelicityAmplitudeBuilder.adapter` to register more topologies and generate more kinematic variables. This is especially useful when generating data later on with [TensorWaves](https://tensorwaves.rtfd.io).
 
@@ -240,11 +235,9 @@ To register even more topologies, use e.g. {func}`~qrules.topology.create_isobar
 
 :::
 
-
 ### Set dynamics
 
-
-To set dynamics for specific resonances, use {meth}`.DynamicsSelector.assign` on the same {attr}`.HelicityAmplitudeBuilder.dynamics` attribute.  You can set the dynamics to be any kind of {class}`~sympy.core.expr.Expr`, as long as you keep track of which {class}`~sympy.core.symbol.Symbol` names you use (see {doc}`/usage/dynamics/custom`).
+To set dynamics for specific resonances, use {meth}`.DynamicsSelector.assign` on the same {attr}`.HelicityAmplitudeBuilder.dynamics` attribute. You can set the dynamics to be any kind of {class}`~sympy.core.expr.Expr`, as long as you keep track of which {class}`~sympy.core.symbol.Symbol` names you use (see {doc}`/usage/dynamics/custom`).
 
 AmpForm does provide a few common {mod}`.dynamics` functions, which can be constructed as {class}`~sympy.core.expr.Expr` with the correct {class}`~sympy.core.symbol.Symbol` names using {meth}`.DynamicsSelector.assign`. This function takes specific {mod}`.dynamics.builder` functions and classes, such as {class}`.RelativisticBreitWignerBuilder`, which can create {func}`.relativistic_breit_wigner` functions for specific resonances. Here's an example for a relativistic Breit-Wigner _with form factor_ for the intermediate resonances and use a Blatt-Weisskopf barrier factor for the production decay:
 
@@ -263,11 +256,9 @@ for name in reaction.get_intermediate_particles().names:
 
 Note that this {class}`.RelativisticBreitWignerBuilder` can also be initialized with a different {class}`.PhaseSpaceFactorProtocol`. This allows us to insert different phase space factors (see {doc}`/usage/dynamics/analytic-continuation` and {func}`.create_analytic_breit_wigner`).
 
-
 ```{seealso}
 {doc}`/usage/dynamics/custom`
 ```
-
 
 And we use the reconfigured {class}`.HelicityAmplitudeBuilder` to generate another {class}`.HelicityModel`, this time with relativistic Breit-Wigner functions and form factors:
 
@@ -281,7 +272,6 @@ Math(aslatex({symbol: expression}, terms_per_line=1))
 ```
 
 ## Export
-
 
 There is no special export function to export an {class}`.HelicityModel`. However, we can just use the built-in {mod}`pickle` module to write the model to disk and load it back:
 
@@ -307,12 +297,9 @@ sp.count_ops(full_expression)
 
 See {func}`.perform_cached_doit` for some tips on how to improve performance.
 
-
 ## Visualize
 
-
 ### Mathematical formula
-
 
 It's possible to view the complete amplitude model as an expression. This would, however, clog the screen here, so we instead just view the formula of one of its {attr}`~.HelicityModel.components`:
 
@@ -324,7 +311,6 @@ some_amplitude.doit()
 ```{note}
 We use {meth}`~sympy.core.basic.Basic.doit` to evaluate the Wigner-$D$ ({meth}`Rotation.D <sympy.physics.quantum.spin.Rotation.D>`) and Clebsch-Gordan ({class}`~sympy.physics.quantum.cg.CG`) functions in the full expression.
 ```
-
 
 The {attr}`.HelicityModel.parameter_defaults` attribute can be used to substitute all parameters with suggested values:
 
@@ -338,9 +324,7 @@ To view the full expression for the amplitude model without crashing Jupyter Lab
 
 :::
 
-
 ### Plotting
-
 
 In this case ($J/\psi \to \gamma f_0, f_0 \to \pi^0\pi^0$) _without dynamics_, the total intensity is only dependent on the $\theta$ angle of $\gamma$ in the center of mass frame (see {func}`.get_helicity_angle_symbols`):
 
@@ -400,11 +384,9 @@ plots[0].show()
 
 ## Plot the model
 
-
 ```{tip}
 See {doc}`/usage/interactive` for a much more didactic way to visualize the model!
 ```
-
 
 In the model _with dynamics_, we have several free symbols, such as the mass and width of the resonances. For the fitting package these will be considered **parameters** that are to be optimized and (kinematic) **variables** that represent the data set. Examples of parameters are mass ($m_\text{particle}$) and width ($\Gamma_\text{particle}$) of the resonances and certain amplitude coefficients ($C$). Examples of kinematic variables are the helicity angles $\theta$ and $\phi$ and the invariant masses ($m_{ij...}$).
 
@@ -413,7 +395,6 @@ sorted(model.expression.free_symbols, key=lambda s: s.name)
 ```
 
 Let's say we want to plot the amplitude model with respect to $m_{3+4}$. We would have to substitute all other free symbols with some value.
-
 
 First, we can use {attr}`.HelicityModel.parameter_defaults` to substitute the parameters with suggested values:
 
@@ -453,7 +434,6 @@ plotted_intensity = evaluated_angle_intensity.doit().subs(
 ```{tip}
 Use {meth}`~sympy.core.basic.Basic.subs` with `simultaneous=True`, as that avoids a bug later on when plotting with {mod}`matplotlib.pyplot`.
 ```
-
 
 That's it! Now we are only left with the invariant mass $m_{3+4}$ of the two pions:
 

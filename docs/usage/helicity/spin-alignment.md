@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,8 +24,8 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Spin alignment
 
@@ -99,7 +99,6 @@ render_amplitudes(non_aligned_model)
 
 ## Dalitz-Plot Decomposition
 
-
 One way of aligning the spins of each sub-system, is Dalitz-Plot Decomposition (DPD) {cite}`Marangotto:2019ucc`. DPD **can only be used for three-body decays**, but results in a quite condense amplitude model expression.
 
 We can select DPD alignment as follows:
@@ -154,7 +153,6 @@ render_amplitudes(dpd_model)
 ```
 
 ## Axis-angle method
-
 
 The second spin alignment method is the 'axis-angle method' {cite}`Marangotto:2019ucc`. This method results in much larger expressions and is therefore much less efficient, but theoretically it **can handle $n$-body final states**. It can be selected as follows:
 

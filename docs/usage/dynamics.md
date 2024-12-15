@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,14 +24,12 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Dynamics
 
-
 {{ run_interactive }}
-
 
 By default, the dynamic terms in an amplitude model are set to $1$ by the {class}`.HelicityAmplitudeBuilder`. The method {meth}`~.DynamicsSelector.assign` of the {attr}`~.HelicityAmplitudeBuilder.dynamics` attribute can then be used to set dynamics lineshapes for specific resonances. The {mod}`.dynamics.builder` module provides some tools to set standard lineshapes (see below), but it is also possible to set {doc}`custom dynamics </usage/dynamics/custom>`.
 
@@ -45,6 +43,7 @@ dynamics/k-matrix
 ```
 
 ```{autolink-skip}
+
 ```
 
 ```python jupyter={"source_hidden": true} mystnb={"code_prompt_show": "Import Python libraries"} tags=["hide-input"]
@@ -66,7 +65,6 @@ warnings.filterwarnings("ignore")
 ```
 
 ## Form factor
-
 
 AmpForm uses Blatt-Weisskopf functions $B_L$ as _barrier factors_ (also called _form factors_, see {class}`.BlattWeisskopfSquared` and **[TR-029](https://compwa.github.io/report/029)**):
 
@@ -192,12 +190,9 @@ if STATIC_WEB_PAGE:
 
 ## Relativistic Breit-Wigner
 
-
 AmpForm has two types of relativistic Breit-Wigner functions. Both are compared below ― for more info, see the links to the API.
 
-
 ### _Without_ form factor
-
 
 The 'normal' {func}`.relativistic_breit_wigner` looks as follows:
 
@@ -210,7 +205,6 @@ rel_bw
 ```
 
 ### _With_ form factor
-
 
 The relativistic Breit-Wigner can be adapted slightly, so that its amplitude goes to zero at threshold ($m_0 = m1 + m2$) and that it becomes normalizable. This is done with {ref}`form factors <usage/dynamics:Form factor>` and can be obtained with the function {func}`.relativistic_breit_wigner_with_ff`:
 
@@ -251,9 +245,7 @@ Math(aslatex({width: width.evaluate()}))
 
 It is possible to choose different formulations for the phase space factor $\rho$, see {doc}`/usage/dynamics/analytic-continuation`.
 
-
 ### Analytic continuation
-
 
 The following shows the effect of {doc}`/usage/dynamics/analytic-continuation` a on relativistic Breit-Wigner:
 

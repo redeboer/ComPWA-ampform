@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,25 +24,20 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
+
 ```
 
-
 # symplot
-
 
 ```{eval-rst}
 .. automodule:: symplot
 ```
 
-
 ## Examples
-
 
 The following examples show how to work with {func}`.prepare_sliders` and the resulting {class}`.SliderKwargs`. For more explanation about what happens behind the scenes, see {doc}`interactive`.
 
-
 ### Exponential wave
-
 
 Construct a mathematical expression with {mod}`sympy`:
 
@@ -81,6 +76,7 @@ if STATIC_WEB_PAGE:
 Now use {doc}`mpl-interactions <mpl_interactions:index>` to plot the {doc}`lambdified <sympy:modules/utilities/lambdify>` expression. Note how the {class}`SliderKwargs` are unpacked as keyword arguments:
 
 ```{autolink-skip}
+
 ```
 
 ```python
@@ -122,7 +118,6 @@ if STATIC_WEB_PAGE:
 ```
 
 ### Range slider
-
 
 See {doc}`mpl_interactions:examples/range-sliders`.
 

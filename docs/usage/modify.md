@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,8 +24,8 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Modify amplitude model
 
@@ -61,7 +61,6 @@ graphviz.Source(dot)
 
 ## Couple parameters
 
-
 We can couple parameters renaming them:
 
 ```python
@@ -86,8 +85,7 @@ new_model.components[R"I_{J/\psi(1S)_{+1} \to \gamma_{+1} \pi^{0}_{0} \pi^{0}_{0
 
 ## Parameter substitution
 
-
-Let's say we want to express all coefficients as a product $Ce^{i\phi}$ of magnitude $C$  with phase $\phi$.
+Let's say we want to express all coefficients as a product $Ce^{i\phi}$ of magnitude $C$ with phase $\phi$.
 
 ```python
 original_coefficients = [
@@ -100,12 +98,10 @@ original_coefficients
 The attributes {attr}`~.HelicityModel.parameter_defaults` and {attr}`~.HelicityModel.components` are _mutable_ {obj}`dict`s, so these can be modified (even if not set as a whole). This is why we make a copy of them below.
 ```
 
-
 There are two things to note now:
 
-1. These parameters appear in {attr}`.HelicityModel.expression`, its {attr}`~.HelicityModel.parameter_defaults`, and its  {attr}`~.HelicityModel.components`, so both these attributes should be modified accordingly.
+1. These parameters appear in {attr}`.HelicityModel.expression`, its {attr}`~.HelicityModel.parameter_defaults`, and its {attr}`~.HelicityModel.components`, so both these attributes should be modified accordingly.
 2. A {class}`.HelicityModel` is {doc}`immutable <attrs:how-does-it-work>`, so we cannot directly replace its attributes. Instead, we should create a new {class}`.HelicityModel` with substituted attributes using {func}`attrs.evolve`:
-
 
 The following snippet shows how to do all this. It's shown in full, because it could well be you want to perform some completely different substitutions (can be any kinds of {meth}`~sympy.core.basic.Basic.subs`). The overall procedure is comparable, however.
 

@@ -4,7 +4,7 @@ jupyter:
     text_representation:
       extension: .md
       format_name: markdown
-      format_version: '1.3'
+      format_version: "1.3"
       jupytext_version: 1.16.4
   kernelspec:
     display_name: Python 3 (ipykernel)
@@ -24,17 +24,14 @@ STATIC_WEB_PAGE = {"EXECUTE_NB", "READTHEDOCS"}.intersection(os.environ)
 ```
 
 ```{autolink-concat}
-```
 
+```
 
 # Inspect model interactively
 
-
 In this notebook, we illustrate how to interactively inspect a {class}`.HelicityModel`. The procedure should in fact work for any {class}`sympy.Expr <sympy.core.expr.Expr>`.
 
-
 ## Create amplitude model
-
 
 First, we create some {class}`.HelicityModel`. We could also have used {mod}`pickle` to {func}`~pickle.load` the {class}`.HelicityModel` that we created in {doc}`/usage/amplitude`, but the cell below allows running this notebook independently.
 
@@ -84,7 +81,6 @@ amplitude = amplitude.doit().subs(substitutions)
 
 ## Lambdify
 
-
 We now need to identify the {class}`~sympy.core.symbol.Symbol` over which the amplitude is to be plotted. The remaining symbols will be turned into slider parameters.
 
 ```python
@@ -105,7 +101,6 @@ np_amplitude = sp.lambdify(
 ```
 
 We also have to define some functions that formulate what we want to plot. A pure amplitude won't do, because we can only plot real values:
-
 
 :::{margin}
 
@@ -130,16 +125,13 @@ def argand(**kwargs):
 
 ## Prepare sliders
 
-
 :::{tip}
 
 This procedure has been extracted to the façade function {func}`symplot.prepare_sliders`.
 
 :::
 
-
 We also need to define the domain over which to plot, as well sliders for each of the remaining symbols. The function {func}`.create_slider` helps creating an [ipywidgets slider](https://ipywidgets.readthedocs.io/en/stable/examples/Widget%20List.html) for each {class}`~sympy.core.symbol.Symbol`:
-
 
 :::{margin}
 
@@ -217,9 +209,7 @@ if STATIC_WEB_PAGE:
 
 ## Interactive Argand plot
 
-
 Finally, we can use {doc}`mpl-interactions <mpl_interactions:index>` to plot the functions defined above with regard to the parameter values:
-
 
 :::{margin}
 
@@ -227,8 +217,8 @@ Interactive {mod}`~matplotlib.widgets` do not render well on web pages, so run t
 
 :::
 
-
 ```{autolink-skip}
+
 ```
 
 ```python jupyter={"source_hidden": true} tags=["remove-cell"]
@@ -301,7 +291,6 @@ if STATIC_WEB_PAGE:
 See {doc}`/usage/dynamics/k-matrix` for why $\boldsymbol{K}$-matrix dynamics are better than simple Breit-Wigners when resonances are close to each other.
 
 :::
-
 
 ```{toctree}
 :hidden:
