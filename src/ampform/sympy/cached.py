@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from functools import cache
 from typing import TYPE_CHECKING, Protocol, overload, runtime_checkable
 
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
     from typing import TypeVar
 
     SympyObject = TypeVar("SympyObject", bound=sp.Basic)
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @cache
@@ -104,3 +107,29 @@ def _match_indexed_symbols(
 @cache
 def _to_symbol(symbol: sp.Indexed) -> sp.Symbol:
     return sp.Symbol(symbol.name, **symbol.assumptions0)
+
+
+def clear_memoize() -> None:
+    import gc  # noqa: PLC0415
+
+    size = 0
+    n_functions = 0
+    for obj in gc.get_objects():
+        if not callable(obj):
+            continue
+        cache_clear = getattr(obj, "cache_clear", None)
+        if not callable(cache_clear):
+            continue
+        cache_info = getattr(obj, "cache_info", None)
+        try:
+            if callable(cache_info):
+                info = cache_info()
+                current_size = getattr(info, "currsize", 0)
+                size += current_size
+                n_functions += bool(current_size)
+            cache_clear()
+        except TypeError:
+            continue
+    if size:
+        msg = f"Cleared {size:,} caches from {n_functions} functions that were decorated with @functools.cache"
+        _LOGGER.warning(msg)
