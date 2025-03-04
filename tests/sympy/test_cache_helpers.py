@@ -87,14 +87,16 @@ class TestLargeHash:
 
     @pytest.mark.slow
     @pytest.mark.parametrize(
-        ("hash1", "hash2", "formalism"),
+        ("formalism", "expected_hashes"),
         [
-            ("8cc382e", "7271e89", "canonical-helicity"),
-            ("0bf9bba", "5f137b2", "helicity"),
+            ("canonical-helicity", ["8cc382e", "7271e89", "7271e89"]),
+            ("helicity", ["0bf9bba", "5f137b2", "5f137b2"]),
         ],
         ids=["canonical-helicity", "helicity"],
     )
-    def test_amplitude_model(self, hash1: str, hash2: str, formalism: SpinFormalism):
+    def test_amplitude_model(
+        self, formalism: SpinFormalism, expected_hashes: list[str]
+    ):
         reaction = qrules.generate_transitions(
             initial_state=[("J/psi(1S)", [-1, 1])],
             final_state=["p~", "K0", "Sigma+"],
@@ -116,10 +118,11 @@ class TestLargeHash:
         for name in reaction.get_intermediate_particles().names:
             model_builder.dynamics.assign(name, dynamics_builder)
         model = model_builder.formulate()
-        h = get_readable_hash(model.expression)[:7]
-        assert h == hash1
-
-        unfolded_expr = model.expression.doit()
-        assert unfolded_expr != model.expression
-        h = get_readable_hash(unfolded_expr)[:7]
-        assert h == hash2
+        intensity_expr = model.expression
+        hashes = []
+        for _ in range(len(expected_hashes)):
+            hashes.append(get_readable_hash(intensity_expr)[:7])
+            intensity_expr = intensity_expr.doit()
+        assert hashes == expected_hashes
+        assert hashes[0] != hashes[1]
+        assert hashes[1] == hashes[2]
