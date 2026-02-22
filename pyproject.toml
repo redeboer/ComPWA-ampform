@@ -1,38 +1,14 @@
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = [
-    "setuptools>=61.2",
-    "setuptools_scm",
-]
+#:tombi schema.strict = false
 
 [project]
-authors = [{name = "Common Partial Wave Analysis", email = "compwa-admin@ep1.rub.de"}]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Education",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
-    "Natural Language :: English",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Programming Language :: Python",
-    "Topic :: Scientific/Engineering :: Physics",
-    "Topic :: Scientific/Engineering",
-    "Typing :: Typed",
-]
-dependencies = [
-    "attrs >=20.1.0", # on_setattr and https://www.attrs.org/en/stable/api.html#next-gen
-    "frozendict",
-    "qrules >=0.9.6",
-    "sympy >=1.10",
-]
+name = "ampform"
 description = "Automatically generate symbolic amplitude models for Partial Wave Analysis"
-dynamic = ["version"]
+requires-python = ">=3.10"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Common Partial Wave Analysis", email = "compwa-admin@ep1.rub.de" }
+]
+maintainers = [{ email = "compwa-admin@ep1.rub.de" }]
 keywords = [
     "HEP",
     "PWA",
@@ -42,18 +18,35 @@ keywords = [
     "particles",
     "physics",
 ]
-license = {file = "LICENSE"}
-maintainers = [{email = "compwa-admin@ep1.rub.de"}]
-name = "ampform"
-requires-python = ">=3.10"
-
-[project.optional-dependencies]
-scipy = ["scipy"]
-viz = ["graphviz"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "attrs >=20.1.0",  # on_setattr and https://www.attrs.org/en/stable/api.html#next-gen
+    "frozendict",
+    "qrules >=0.9.6",
+    "sympy >=1.10",
+]
+dynamic = ["version"]
 
 [project.readme]
-content-type = "text/markdown"
 file = "README.md"
+content-type = "text/markdown"
 
 [project.urls]
 Changelog = "https://github.com/ComPWA/ampform/releases"
@@ -61,13 +54,18 @@ Documentation = "https://ampform.rtfd.io"
 Issues = "https://github.com/ComPWA/ampform/issues"
 Source = "https://github.com/ComPWA/ampform"
 
+[project.optional-dependencies]
+scipy = ["scipy"]
+viz = ["graphviz"]
+
 [dependency-groups]
 dev = [
     "ruff",
-    {include-group = "doc"},
-    {include-group = "jupyter"},
-    {include-group = "style"},
-    {include-group = "test"},
+    "tombi",
+    { include-group = "doc" },
+    { include-group = "jupyter" },
+    { include-group = "style" },
+    { include-group = "test" },
 ]
 doc = [
     "myst-nb",
@@ -83,7 +81,7 @@ doc = [
     "sphinx-thebe",
     "sphinx-togglebutton",
     "sphinxcontrib-bibtex >=2",
-    {include-group = "notebooks"},
+    { include-group = "notebooks" },
 ]
 jupyter = [
     "jupyter-ruff",
@@ -107,7 +105,7 @@ notebooks = [
 ]
 style = [
     "ty",
-    {include-group = "types"},
+    { include-group = "types" },
 ]
 test = [
     "ampform[scipy]",
@@ -127,22 +125,15 @@ types = [
     "pytest",
     "pytest-benchmark",
     "sphinx-api-relink >=0.0.3",
-    {include-group = "notebooks"},
+    { include-group = "notebooks" },
 ]
 
-[tool.setuptools]
-include-package-data = false
-package-dir = {"" = "src"}
-
-[tool.setuptools.package-data]
-ampform = ["py.typed"]
-
-[tool.setuptools.packages.find]
-namespaces = false
-where = ["src"]
-
-[tool.setuptools_scm]
-write_to = "src/ampform/version.py"
+[build-system]
+requires = [
+    "setuptools>=61.2",
+    "setuptools_scm",
+]
+build-backend = "setuptools.build_meta"
 
 [tool.coverage.report]
 exclude_also = [
@@ -185,7 +176,7 @@ pytest benchmarks \
     --durations=0 \
     -k benchmark
 """
-executor = {group = "test"}
+executor = { type = "uv", group = "test" }
 help = "Run benchmark tests and visualize performance"
 
 [tool.poe.tasks.cov]
@@ -198,7 +189,7 @@ pytest \
     --numprocesses=auto \
     ${paths}
 """
-executor = {group = "test"}
+executor = { type = "uv", group = "test" }
 help = "Compute how much of the source code is covered by tests"
 
 [[tool.poe.tasks.cov.args]]
@@ -217,8 +208,8 @@ sphinx-build \
     docs/ \
     docs/_build/html/
 """
-env = {PYTHONWARNINGS = ""}
-executor = {group = "doc"}
+env = { PYTHONWARNINGS = "" }
+executor = { type = "uv", group = "doc" }
 help = "Build documentation and API"
 
 [tool.poe.tasks.doclive]
@@ -246,28 +237,28 @@ sphinx-autobuild \
     docs/ \
     docs/_build/html/
 """
-executor = {group = "doc", with = "sphinx-autobuild"}
+executor = { type = "uv", group = "doc", with = "sphinx-autobuild" }
 help = "Set up a server to directly preview changes to the HTML pages"
 
 [tool.poe.tasks.docnb]
-env = {EXECUTE_NB = "yes"}
+env = { EXECUTE_NB = "yes" }
 help = "Build documentation and API with cached notebook execution"
 sequence = ["doc"]
 
 [tool.poe.tasks.docnb-force]
-env = {FORCE_EXECUTE_NB = "yes"}
+env = { FORCE_EXECUTE_NB = "yes" }
 help = "Build documentation and API with notebook execution (no cache)"
 sequence = ["doc"]
 
 [tool.poe.tasks.docnblive]
-env = {EXECUTE_NB = "yes"}
+env = { EXECUTE_NB = "yes" }
 help = "Set up a server to directly preview changes to the HTML pages with cached notebook execution"
 sequence = ["doclive"]
 
 [tool.poe.tasks.lab]
-args = [{name = "paths", default = "", positional = true}]
+args = [{ name = "paths", default = "", positional = true }]
 cmd = "jupyter lab ${paths}"
-executor = {group = ["jupyter", "notebooks"]}
+executor = { type = "uv", group = ["jupyter", "notebooks"] }
 help = "Launch Jupyter Lab"
 
 [tool.poe.tasks.linkcheck]
@@ -279,24 +270,26 @@ sphinx-build \
     docs/ \
     docs/_build/linkcheck/
 """
-env = {PYTHONWARNINGS = ""}
-executor = {group = "doc"}
+env = { PYTHONWARNINGS = "" }
+executor = { type = "uv", group = "doc" }
 help = "Check external links in the documentation (requires internet connection)"
 
 [tool.poe.tasks.nb]
-args = [{name = "paths", default = "docs", multiple = true, positional = true}]
+args = [
+    { name = "paths", default = "docs", multiple = true, positional = true }
+]
 cmd = "pytest --nbmake --nbmake-timeout=0 ${paths}"
-executor = {group = "notebooks", with = "nbmake"}
+executor = { type = "uv", group = "notebooks", with = "nbmake" }
 help = "Run all notebooks"
 
 [tool.poe.tasks.style]
 cmd = "pre-commit run --all-files"
-executor = {extra = "scipy", group = "style"}
+executor = { type = "uv", extra = "scipy", group = "style" }
 help = "Perform all linting, formatting, and spelling checks"
 
 [tool.poe.tasks.test]
 cmd = "pytest -m 'slow or not slow' --numprocesses=auto ${paths}"
-executor = {group = "test"}
+executor = { type = "uv", group = "test" }
 help = "Run all unit tests"
 
 [[tool.poe.tasks.test.args]]
@@ -308,11 +301,11 @@ positional = true
 [tool.poe.tasks.test-all]
 help = "Run all tests on each supported Python version"
 sequence = [
-    {ref = "test-py310 ${paths}"},
-    {ref = "test-py311 ${paths}"},
-    {ref = "test-py312 ${paths}"},
-    {ref = "test-py313 ${paths}"},
-    {ref = "test-py314 ${paths}"},
+    { ref = "test-py310 ${paths}" },
+    { ref = "test-py311 ${paths}" },
+    { ref = "test-py312 ${paths}" },
+    { ref = "test-py313 ${paths}" },
+    { ref = "test-py314 ${paths}" },
 ]
 
 [[tool.poe.tasks.test-all.args]]
@@ -322,23 +315,23 @@ name = "paths"
 positional = true
 
 [tool.poe.tasks.test-py310]
-env = {UV_PYTHON = "3.10"}
+env = { UV_PYTHON = "3.10" }
 ref = "test"
 
 [tool.poe.tasks.test-py311]
-env = {UV_PYTHON = "3.11"}
+env = { UV_PYTHON = "3.11" }
 ref = "test"
 
 [tool.poe.tasks.test-py312]
-env = {UV_PYTHON = "3.12"}
+env = { UV_PYTHON = "3.12" }
 ref = "test"
 
 [tool.poe.tasks.test-py313]
-env = {UV_PYTHON = "3.13"}
+env = { UV_PYTHON = "3.13" }
 ref = "test"
 
 [tool.poe.tasks.test-py314]
-env = {UV_PYTHON = "3.14"}
+env = { UV_PYTHON = "3.14" }
 ref = "test"
 
 [tool.pytest]
@@ -363,11 +356,11 @@ filterwarnings = [
     "ignore:Passing a schema to Validator.iter_errors is deprecated.*:DeprecationWarning",
     "ignore:The distutils package is deprecated.*:DeprecationWarning",
     "ignore:The distutils.* module is deprecated.*:DeprecationWarning",
-    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated and scheduled for removal in a future version.*:DeprecationWarning",
-    "ignore:unclosed .*:ResourceWarning",
     'ignore:Widget\..* is deprecated\.:DeprecationWarning',
-    'ignore:atleast_1d requires ndarray or scalar arguments.*:DeprecationWarning',
+    "ignore:atleast_1d requires ndarray or scalar arguments.*:DeprecationWarning",
+    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated and scheduled for removal in a future version.*:DeprecationWarning",
     'ignore:jax\.core\.(un)?mapped_aval is deprecated\.:DeprecationWarning',
+    "ignore:unclosed .*:ResourceWarning",
 ]
 markers = ["slow: marks tests as slow (select with '-m slow')"]
 minversion = "9.0"
@@ -437,7 +430,7 @@ extend-immutable-calls = [
 ]
 
 [tool.ruff.lint.flake8-builtins]
-builtins-ignorelist = ["display"]
+ignorelist = ["display"]
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
@@ -537,18 +530,21 @@ convention = "google"
 allow-dunder-method-names = ["_latex_repr_", "_repr_pretty_"]
 max-positional-args = 7
 
-[tool.tomlsort]
-all = false
-ignore_case = true
-in_place = true
-sort_first = [
-    "build-system",
-    "project",
-    "tool.setuptools",
-    "tool.setuptools_scm",
-]
-spaces_indent_inline_array = 4
-trailing_comma_inline_array = true
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.package-data]
+ampform = ["py.typed"]
+
+[tool.setuptools.packages.find]
+namespaces = false
+where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/ampform/version.py"
+
+[tool.tombi.format.rules]
+indent-width = 4
 
 [[tool.ty.overrides]]
 include = ["docs/**"]
