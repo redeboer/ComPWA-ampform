@@ -132,6 +132,9 @@ doc-apt-packages = "graphviz"
 repo-name = "ampform"
 repo-title = "AmpForm"
 
+[tool.compwa.policy.format]
+no-cspell-update = true
+
 [tool.compwa.policy.python]
 type-checker = ["ty"]
 
@@ -464,6 +467,10 @@ known-third-party = ["sympy"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
+".claude/**" = [
+    "S404",
+    "T20",
+]
 "*.ipynb" = [
     "B018",
     "C408",
