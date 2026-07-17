@@ -49,3 +49,4 @@ pyvenv*/
 !.vscode/*.json
 !.zenodo.json
 !codecov.yml
+!src/ampform/particle-definitions.yml
