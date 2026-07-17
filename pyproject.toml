@@ -37,6 +37,7 @@ dependencies = [
     "frozendict",
     "qrules >=0.9.6",
     "sympy >=1.10",
+    'typing-extensions; python_version <"3.11.0"',  # typing.Required
 ]
 dynamic = ["version"]
 
