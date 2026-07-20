@@ -63,11 +63,23 @@ class AmplitudeModel:
     )
     masses: dict[sp.Symbol, float] = field(factory=dict)
     invariants: dict[sp.Symbol, sp.Expr] = field(factory=dict)
+    matrices: dict[sp.MatrixSymbol, sp.ImmutableDenseMatrix] = field(factory=dict)
+    """Definitions of the `~sympy.matrices.expressions.MatrixSymbol` instances that
+    appear in the `intensity` of a polarized model (see
+    :meth:`.DalitzPlotDecompositionBuilder.formulate_polarized_intensity`)."""
 
     @property
     def full_expression(self) -> sp.Expr:
+        intensity = self.intensity
+        if self.matrices:
+            intensity = intensity.xreplace(self.matrices)
         evaluated_amplitudes = {k: v.doit() for k, v in self.amplitudes.items()}
-        return self.intensity.doit().xreplace(evaluated_amplitudes)
+        # amplitude definitions may reference other amplitude symbols, e.g. the elements
+        # of the decay matrix O are defined in terms of the subsystem amplitudes A^k
+        evaluated_amplitudes = {
+            k: v.xreplace(evaluated_amplitudes) for k, v in evaluated_amplitudes.items()
+        }
+        return intensity.doit().xreplace(evaluated_amplitudes)
 
 
 class DalitzPlotDecompositionBuilder:
@@ -110,8 +122,9 @@ class DalitzPlotDecompositionBuilder:
         *,
         cleanup_summations: bool = False,
         use_coefficients: bool = False,
+        polarized: bool = False,
     ) -> AmplitudeModel:
-        """Formulate the amplitude model given the configuration of this builder.
+        r"""Formulate the amplitude model given the configuration of this builder.
 
         Args:
             reference_subsystem: The subsystem to use as reference for the alignment of
@@ -120,6 +133,12 @@ class DalitzPlotDecompositionBuilder:
                 their corresponding state is spinless.
             use_coefficients: Whether to use a single complex coefficient per decay
                 chain, instead of separate coefficients for each helicity coupling.
+            polarized: Whether to formulate the intensity with a spin-density matrix
+                :math:`\rho` for the initial state (see
+                :meth:`formulate_polarized_intensity`). If `False`, the initial-state
+                spin projections are summed incoherently, which is equivalent to
+                integrating over the orientation angles of the initial state
+                ("unpolarized intensity").
         """
         if reference_subsystem is None:
             reference_subsystem = _get_best_reference_subsystems(self.decay)
@@ -149,32 +168,43 @@ class DalitzPlotDecompositionBuilder:
                 amplitude_definitions.update(chain_model.amplitudes)
                 angle_definitions.update(chain_model.variables)
                 parameter_defaults.update(chain_model.parameter_defaults)
-        aligned_amp, zeta_defs = self.formulate_aligned_amplitude(
-            *helicity_symbols,
-            reference_subsystem,
-        )
-        angle_definitions.update(zeta_defs)  # ty:ignore[no-matching-overload]
         masses = create_mass_symbol_mapping(self.decay)
         parameter_defaults.update(masses)  # ty:ignore[no-matching-overload]
-        if cleanup_summations:
-            aligned_amp = aligned_amp.cleanup()
-        intensity = PoolSum(
-            sp.Abs(aligned_amp) ** 2,
-            *allowed_helicities.items(),
-        )
-        if cleanup_summations:
-            intensity = intensity.cleanup()
-        return AmplitudeModel(
-            decay=self.decay,
-            intensity=PoolSum(
+        matrices: dict[sp.MatrixSymbol, sp.ImmutableDenseMatrix] = {}
+        if polarized:
+            polarized_model = self.formulate_polarized_intensity(
+                *helicity_symbols,
+                reference_subsystem,
+                cleanup_summations=cleanup_summations,
+            )
+            intensity = polarized_model.intensity
+            matrices = polarized_model.matrices
+            amplitude_definitions.update(polarized_model.amplitudes)
+            angle_definitions.update(polarized_model.variables)
+            parameter_defaults.update(polarized_model.parameter_defaults)
+        else:
+            aligned_amp, zeta_defs = self.formulate_aligned_amplitude(
+                *helicity_symbols,
+                reference_subsystem,
+            )
+            angle_definitions.update(zeta_defs)  # ty:ignore[no-matching-overload]
+            if cleanup_summations:
+                aligned_amp = aligned_amp.cleanup()
+            intensity = PoolSum(
                 sp.Abs(aligned_amp) ** 2,
                 *allowed_helicities.items(),
-            ),
+            )
+            if cleanup_summations:
+                intensity = intensity.cleanup()
+        return AmplitudeModel(
+            decay=self.decay,
+            intensity=intensity,
             amplitudes=amplitude_definitions,
             variables=angle_definitions,
             parameter_defaults=parameter_defaults,
             masses=masses,
             invariants=formulate_invariants(self.decay),
+            matrices=matrices,
         )
 
     def formulate_subsystem_amplitude(  # noqa: PLR0914
@@ -295,6 +325,167 @@ class DalitzPlotDecompositionBuilder:
             (_λ3, get_spin_projections(states[3])),
         )
         return amp_expr, wigner_generator.angle_definitions
+
+    def formulate_polarized_intensity(
+        self,
+        λ0: sp.Symbol,
+        λ1: sp.Symbol,
+        λ2: sp.Symbol,
+        λ3: sp.Symbol,
+        reference_subsystem: FinalStateID | None = None,
+        *,
+        cleanup_summations: bool = False,
+    ) -> AmplitudeModel:
+        r"""Formulate an intensity with a spin-density matrix for the initial state.
+
+        The differential decay rate over the Dalitz variables **and** the orientation
+        of the initial state is formulated as a matrix expression
+
+        .. math::
+            I\left(\{\sigma\}; \phi, \theta, \chi\right) = \operatorname{tr}\left(
+                \rho \, \overline{D} \, O \, \overline{D}^\dagger
+            \right)\,,
+
+        with :math:`\rho` the spin-density matrix of the initial state in the
+        production frame, :math:`\overline{D}` the matrix of conjugated
+        Wigner-:math:`D` functions,
+        :math:`\overline{D}_{m_0,\nu} = D^{j_0*}_{m_0,\nu}(\phi, \theta, \chi)`, over
+        the Euler angles :math:`\phi, \theta, \chi` that describe the orientation of
+        the decay plane, and :math:`O` the spin-density matrix of the decay itself,
+
+        .. math::
+            O_{\nu,\nu'}\left(\{\sigma\}\right) = \sum_{\{\lambda\}}
+                O^\nu_{\{\lambda\}}\left(\{\sigma\}\right)
+                O^{\nu'*}_{\{\lambda\}}\left(\{\sigma\}\right)\,,
+
+        where :math:`O^\nu_{\{\lambda\}}` are the aligned transition amplitudes
+        obtained from :meth:`formulate_aligned_amplitude`. The matrix symbols are
+        defined as explicit matrices in `.AmplitudeModel.matrices`. Both matrix indices
+        are ordered by ascending spin projection, so row and column :math:`0`
+        correspond to projection :math:`-j_0`. The elements of :math:`\rho` appear as
+        parameters :math:`\rho_{m_0',m_0}` (upper triangle only, since :math:`\rho` is
+        Hermitian) and default to the unpolarized case,
+        :math:`\rho = \mathbb{1} / (2j_0+1)`. The Euler angles remain free kinematic
+        variables, as they cannot be expressed in terms of Mandelstam variables.
+        """
+        aligned_amp, zeta_defs = self.formulate_aligned_amplitude(
+            λ0, λ1, λ2, λ3, reference_subsystem
+        )
+        if cleanup_summations:
+            aligned_amp = aligned_amp.cleanup()
+        initial_state = self.decay.initial_state
+        projections = get_spin_projections(initial_state)
+        final_state_projections = {
+            symbol: get_spin_projections(self.decay.final_state[i])
+            for i, symbol in enumerate([λ1, λ2, λ3], start=1)
+        }
+        n = len(projections)
+        ρ_matrix = sp.MatrixSymbol(R"\rho", n, n)
+        d_matrix = sp.MatrixSymbol(R"\overline{D}", n, n)
+        o_matrix = sp.MatrixSymbol("O", n, n)
+        ρ_elements = sp.IndexedBase(R"\rho")
+        o_elements = sp.IndexedBase("O")
+        return AmplitudeModel(
+            decay=self.decay,
+            intensity=sp.Trace(ρ_matrix @ d_matrix @ o_matrix @ sp.Adjoint(d_matrix)),
+            amplitudes=_formulate_decay_matrix_elements(
+                o_elements,
+                aligned_amp,
+                λ0,
+                projections,
+                final_state_projections,
+                cleanup_summations=cleanup_summations,
+            ),
+            variables=zeta_defs,
+            parameter_defaults=_create_unpolarized_spin_density(
+                ρ_elements, projections
+            ),
+            matrices={
+                ρ_matrix: _create_hermitian_matrix(ρ_elements, projections),
+                d_matrix: _create_conjugate_wigner_d_matrix(
+                    sp.Rational(initial_state.spin), projections
+                ),
+                o_matrix: _create_hermitian_matrix(o_elements, projections),
+            },
+        )
+
+
+def _create_hermitian_matrix(
+    elements: sp.IndexedBase, projections: list[sp.Rational]
+) -> sp.ImmutableDenseMatrix:
+    r"""Create a Hermitian matrix over indexed elements for the upper triangle.
+
+    >>> rho = sp.IndexedBase(R"\rho")
+    >>> _create_hermitian_matrix(rho, [sp.Rational(-1, 2), sp.Rational(1, 2)])
+    Matrix([
+    [          \rho[-1/2, -1/2], \rho[-1/2, 1/2]],
+    [conjugate(\rho[-1/2, 1/2]),  \rho[1/2, 1/2]]])
+    """
+
+    def element(i: int, j: int) -> sp.Expr:
+        if i <= j:
+            return elements[projections[i], projections[j]]
+        return sp.conjugate(elements[projections[j], projections[i]])
+
+    n = len(projections)
+    return sp.ImmutableMatrix(n, n, element)
+
+
+def _create_conjugate_wigner_d_matrix(
+    j0: sp.Rational, projections: list[sp.Rational]
+) -> sp.ImmutableDenseMatrix:
+    r"""Create the matrix :math:`\overline{D}_{m,\nu} = D^{j_0*}_{m,\nu}(\phi,\theta,\chi)`."""
+    φ, θ, χ = sp.symbols("phi theta chi", real=True)
+    return sp.ImmutableMatrix([
+        [sp.conjugate(Wigner.D(j0, m, ν, φ, θ, χ)) for ν in projections]
+        for m in projections
+    ])
+
+
+def _formulate_decay_matrix_elements(
+    o_elements: sp.IndexedBase,
+    aligned_amplitude: PoolSum,
+    λ0: sp.Symbol,
+    projections: list[sp.Rational],
+    final_state_projections: dict[sp.Symbol, list[sp.Rational]],
+    *,
+    cleanup_summations: bool = False,
+) -> dict[sp.Indexed, sp.Expr]:
+    r"""Formulate the upper-triangle elements of the decay spin-density matrix.
+
+    Each element is :math:`O_{\nu,\nu'} = \sum_{\{\lambda\}} O^\nu_{\{\lambda\}}
+    O^{\nu'*}_{\{\lambda\}}`, with the sum taken over the final-state helicities.
+    """
+    definitions: dict[sp.Indexed, sp.Expr] = {}
+    for i, ν in enumerate(projections):
+        for j, ν_prime in enumerate(projections):
+            if i > j:
+                continue
+            if i == j:
+                summand = sp.Abs(aligned_amplitude.xreplace({λ0: ν})) ** 2
+            else:
+                summand = aligned_amplitude.xreplace({λ0: ν}) * sp.conjugate(
+                    aligned_amplitude.xreplace({λ0: ν_prime})
+                )
+            matrix_element = PoolSum(summand, *final_state_projections.items())
+            if cleanup_summations:
+                matrix_element = matrix_element.cleanup()
+            definitions[o_elements[ν, ν_prime]] = matrix_element
+    return definitions
+
+
+def _create_unpolarized_spin_density(
+    ρ_elements: sp.IndexedBase, projections: list[sp.Rational]
+) -> dict[sp.Basic, ParameterValue]:
+    r"""Create default values :math:`\rho = \mathbb{1}/(2j_0+1)` for the upper triangle."""
+    n = len(projections)
+    defaults: dict[sp.Basic, ParameterValue] = {}
+    for i, m in enumerate(projections):
+        for j, m_prime in enumerate(projections):
+            if i > j:
+                continue
+            defaults[ρ_elements[m, m_prime]] = 1 / n if i == j else 0j
+    return defaults
 
 
 def _product(obj: Any | Iterable):

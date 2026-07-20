@@ -191,6 +191,103 @@ class TestDalitzPlotDecompositionBuilder:
         assert n_coefficients == n_decay_couplings * n_production_couplings
 
 
+class TestPolarizedIntensity:
+    @pytest.fixture(scope="session")
+    def models(
+        self, jpsi2pksigma_reaction: ReactionInfo
+    ) -> tuple[AmplitudeModel, AmplitudeModel]:
+        if jpsi2pksigma_reaction.formalism != "helicity":
+            pytest.skip("Polarized intensity is tested in the helicity basis only")
+        transitions = normalize_state_ids(jpsi2pksigma_reaction.transitions)
+        decay = to_three_body_decay(transitions, min_ls=True)
+        builder = DalitzPlotDecompositionBuilder(decay, min_ls=True)
+        unpolarized = builder.formulate(reference_subsystem=2)
+        polarized = builder.formulate(reference_subsystem=2, polarized=True)
+        return unpolarized, polarized
+
+    def test_intensity_is_matrix_sandwich(
+        self, models: tuple[AmplitudeModel, AmplitudeModel]
+    ):
+        _, model = models
+        intensity = model.intensity
+        assert isinstance(intensity, sp.Trace)
+        matrix_symbols = {str(s): s for s in model.matrices}
+        assert set(matrix_symbols) == {R"\rho", R"\overline{D}", "O"}
+        for symbol, matrix in model.matrices.items():
+            assert symbol.shape == (3, 3)
+            assert matrix.shape == (3, 3)
+        for name in (R"\rho", "O"):
+            matrix = model.matrices[matrix_symbols[name]]
+            for i in range(3):
+                for j in range(i + 1, 3):
+                    assert matrix[j, i] == sp.conjugate(matrix[i, j])
+
+    def test_spin_density_defaults_are_unpolarized(
+        self, models: tuple[AmplitudeModel, AmplitudeModel]
+    ):
+        _, model = models
+        ρ = sp.IndexedBase(R"\rho")
+        spin_projections = [-1, 0, +1]
+        for i, m in enumerate(spin_projections):
+            for j, m_prime in enumerate(spin_projections):
+                if i > j:
+                    assert ρ[m, m_prime] not in model.parameter_defaults
+                elif i == j:
+                    assert model.parameter_defaults[ρ[m, m_prime]] == 1 / 3
+                else:
+                    assert model.parameter_defaults[ρ[m, m_prime]] == 0
+
+    @pytest.mark.slow
+    def test_unpolarized_limit(self, models: tuple[AmplitudeModel, AmplitudeModel]):
+        unpolarized, polarized = models
+        funcs = [
+            _lambdify_over_mandelstam_and_orientation(model)
+            for model in (unpolarized, polarized)
+        ]
+        f_unpolarized, f_polarized = funcs
+        σ1, σ2 = 4.6, 3.1  # inside phase space
+        for angles in [(0.3, 0.7, -1.1), (2.0, 1.4, 0.5)]:
+            intensity = f_polarized(σ1, σ2, *angles)
+            assert intensity.imag == pytest.approx(0, abs=1e-12)
+            n_initial_spin_states = 3
+            assert n_initial_spin_states * intensity.real == pytest.approx(
+                f_unpolarized(σ1, σ2, *angles).real
+            )
+
+    @pytest.mark.slow
+    def test_longitudinally_polarized_intensity_depends_on_orientation(
+        self, models: tuple[AmplitudeModel, AmplitudeModel]
+    ):
+        _, model = models
+        ρ = sp.IndexedBase(R"\rho")
+        polarization = {ρ[-1, -1]: 0.5, ρ[0, 0]: 0.0, ρ[+1, +1]: 0.5}
+        func = _lambdify_over_mandelstam_and_orientation(model, polarization)
+        σ1, σ2 = 4.6, 3.1
+        intensities = [func(σ1, σ2, 0.3, θ, -1.1).real for θ in (0.0, 0.7, 1.5)]
+        assert len({round(i, 7) for i in intensities}) == len(intensities)
+
+
+def _lambdify_over_mandelstam_and_orientation(
+    model: AmplitudeModel, parameters: dict[sp.Basic, complex] | None = None
+):
+    substitutions = dict(model.parameter_defaults)
+    if parameters is not None:
+        substitutions.update(parameters)
+    expr = model.full_expression.xreplace(substitutions).doit()
+    kinematic_definitions = {k: v.doit() for k, v in model.variables.items()}
+    σ3, σ3_expr = list(model.invariants.items())[2]
+    kinematic_definitions = {
+        k: v.xreplace({σ3: σ3_expr}).xreplace(model.masses)
+        for k, v in kinematic_definitions.items()
+    }
+    expr = expr.xreplace(kinematic_definitions).xreplace({σ3: σ3_expr})
+    expr = expr.xreplace(model.masses)
+    σ1, σ2 = sp.symbols("sigma1 sigma2", nonnegative=True)
+    orientation = sp.symbols("phi theta chi", real=True)
+    func = sp.lambdify([σ1, σ2, *orientation], expr, "numpy")
+    return lambda *args: complex(func(*args))
+
+
 def test_no_zero_helicity_for_massless_states():
     """Massless final states are summed over helicities -1 and +1 only."""
     ψ = State("psi", latex=R"\psi", spin=1, parity=-1, mass=3.1, width=0.0, index=0)

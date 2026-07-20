@@ -89,7 +89,11 @@ def unfold(
 ) -> sp.Expr:
     """Efficiently perform both substitutions and :code:`doit()`."""
     if isinstance(obj, Model):
-        return _unfold_impl(obj.intensity, obj.amplitudes)
+        intensity = obj.intensity
+        matrices: Mapping[sp.Basic, sp.Basic] = getattr(obj, "matrices", {})
+        if matrices:
+            intensity = xreplace(intensity, matrices)
+        return _unfold_impl(intensity, obj.amplitudes)
     if substitutions is None:
         substitutions = {}
     return _unfold_impl(obj, substitutions)
@@ -113,4 +117,11 @@ def _unfold_impl(expr: sp.Expr, substitutions: Mapping[sp.Basic, Any]) -> sp.Exp
 def _unfold_substitutions(
     substitutions: frozendict[sp.Basic, Any],
 ) -> frozendict[sp.Basic, Any]:
-    return frozendict({k: doit(v) for k, v in substitutions.items()})
+    evaluated = frozendict({k: doit(v) for k, v in substitutions.items()})
+    # definitions may reference other definitions, e.g. the spin-density matrix
+    # elements of a polarized DPD model are defined in terms of subsystem amplitudes
+    if any(set(evaluated) & v.free_symbols for v in evaluated.values()):
+        evaluated = frozendict({
+            k: xreplace(v, evaluated) for k, v in evaluated.items()
+        })
+    return evaluated
