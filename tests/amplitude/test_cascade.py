@@ -353,6 +353,7 @@ class TestDalitzPlotDecompositionEquivalence:
         assert dpd_intensities.min() > 0
         np.testing.assert_allclose(cascade_intensities, dpd_intensities, rtol=1e-8)
 
+
 class TestPolarizedCascadeIntensity:
     @pytest.fixture(scope="session")
     def model(self, four_body_decay: Decay):
@@ -430,6 +431,142 @@ class TestPolarizedCascadeIntensity:
             builder.formulate(reference_subsystem=(1, 3))
 
 
+class TestReferenceSubsystemIndependence:
+    r"""The reference subsystem only splits the intensity, it does not change it.
+
+    A reference subsystem defines which part of the decay orientation is carried by the
+    Wigner-:math:`D` matrix :math:`\overline{D}(\phi, \theta, \chi)` and which part by
+    the decay matrix :math:`O` over the aligned momenta. The differential decay rate in
+    the production frame is the same for either choice.
+    """
+
+    @pytest.fixture(scope="session")
+    def momenta(self, four_body_decay: Decay) -> dict[int, np.ndarray]:
+        return generate_momenta(four_body_decay, n_events=30, seed=0)
+
+    @pytest.fixture(scope="session")
+    def polarization(self) -> dict[sp.Basic, complex]:
+        rho = sp.IndexedBase(R"\rho")
+        half = sp.Rational(1, 2)
+        return {
+            rho[-half, -half]: 0.15,
+            rho[-half, +half]: 0.2 + 0.1j,
+            rho[+half, +half]: 0.85,
+        }
+
+    @pytest.fixture(scope="session")
+    def models(self, four_body_decay: Decay):
+        builder = CascadeAmplitudeBuilder(four_body_decay)
+        return [
+            builder.formulate(
+                reference_topology=((1, 3), (2, 4)),
+                polarized=True,
+                reference_subsystem=subsystem,
+            )
+            for subsystem in ((1, 3), (2, 4))
+        ]
+
+    def test_orientation_angles_differ(self, models, momenta):
+        angles = [_compute_orientation_angles(model, momenta) for model in models]
+        for angle in ("phi", "theta", "chi"):
+            assert not np.allclose(angles[0][angle], angles[1][angle])
+
+    def test_intensities_are_identical(self, models, momenta, polarization):
+        intensities = [
+            _evaluate_polarized_model(model, momenta, polarization) for model in models
+        ]
+        assert min(i.min() for i in intensities) > 0
+        np.testing.assert_allclose(*intensities, rtol=1e-10)
+
+
+def _evaluate_polarized_model(
+    model,
+    momenta: dict[int, np.ndarray],
+    parameters: dict[sp.Basic, complex],
+) -> np.ndarray:
+    """Evaluate a polarized cascade model over momenta in the production frame."""
+    orientation = _compute_orientation_angles(model, momenta)
+    data = compute_kinematic_variables(model, _align_momenta(momenta, orientation))
+    data.update({
+        symbol: orientation[descriptor.angle]
+        for symbol, descriptor in model.kinematic_variables.items()
+        if isinstance(descriptor, OrientationAngle)
+    })
+    # substituting complex values into the expression explodes its size, so the
+    # couplings and spin-density elements are kept as arguments of the function
+    complex_parameters = sorted(
+        (
+            symbol
+            for symbol in model.parameter_defaults
+            if str(symbol).startswith((R"\mathcal{H}", R"\rho"))
+        ),
+        key=str,
+    )
+    fixed_parameters = {
+        symbol: value
+        for symbol, value in model.parameter_defaults.items()
+        if symbol not in set(complex_parameters)
+    }
+    expression = model.full_expression.xreplace(fixed_parameters).doit()
+    symbols = sorted(model.kinematic_variables, key=str)
+    func = sp.lambdify([*symbols, *complex_parameters], expression, "numpy", cse=True)
+    values = [
+        complex(parameters.get(symbol, model.parameter_defaults[symbol]))
+        for symbol in complex_parameters
+    ]
+    return np.real(func(*(data[s] for s in symbols), *values))
+
+
+def _compute_orientation_angles(
+    model, momenta: dict[int, np.ndarray]
+) -> dict[str, np.ndarray]:
+    """Compute the Euler angles that orient the decay, following `.OrientationAngle`."""
+    descriptor = next(
+        descriptor
+        for descriptor in model.kinematic_variables.values()
+        if isinstance(descriptor, OrientationAngle)
+    )
+    subsystem = np.sum([momenta[i] for i in descriptor.subsystem_ids], axis=0)
+    daughter = np.sum([momenta[i] for i in descriptor.daughter_ids], axis=0)
+    phi = np.arctan2(subsystem[:, 1], subsystem[:, 0])
+    theta = np.arccos(subsystem[:, 2] / np.linalg.norm(subsystem[:, :3], axis=-1))
+    rotated = _rotate_y(_rotate_z(daughter, -phi), -theta)
+    chi = np.arctan2(rotated[:, 1], rotated[:, 0])
+    return {"phi": phi, "theta": theta, "chi": chi}
+
+
+def _align_momenta(
+    momenta: dict[int, np.ndarray], orientation: dict[str, np.ndarray]
+) -> dict[int, np.ndarray]:
+    phi, theta, chi = (orientation[angle] for angle in ("phi", "theta", "chi"))
+    return {
+        i: _rotate_z(_rotate_y(_rotate_z(p, -phi), -theta), -chi)
+        for i, p in momenta.items()
+    }
+
+
+def _rotate_z(p: np.ndarray, angle: np.ndarray) -> np.ndarray:
+    return np.stack(
+        [
+            np.cos(angle) * p[:, 0] - np.sin(angle) * p[:, 1],
+            np.sin(angle) * p[:, 0] + np.cos(angle) * p[:, 1],
+            p[:, 2],
+            p[:, 3],
+        ],
+        axis=-1,
+    )
+
+
+def _rotate_y(p: np.ndarray, angle: np.ndarray) -> np.ndarray:
+    return np.stack(
+        [
+            np.cos(angle) * p[:, 0] + np.sin(angle) * p[:, 2],
+            p[:, 1],
+            -np.sin(angle) * p[:, 0] + np.cos(angle) * p[:, 2],
+            p[:, 3],
+        ],
+        axis=-1,
+    )
 
 
 def _formulate_chain_bw(chain: ThreeBodyDecayChain) -> DefinedExpression:
