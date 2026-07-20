@@ -8,6 +8,7 @@ from ampform.amplitude.cascade import (
     CascadeAmplitudeBuilder,
     HelicityAngle,
     InvariantMass,
+    OrientationAngle,
     WignerRotation,
     create_invariant_mass_symbol,
     to_topology,
@@ -351,6 +352,84 @@ class TestDalitzPlotDecompositionEquivalence:
         cascade_intensities = _evaluate_cascade_model(cascade_model, momenta)
         assert dpd_intensities.min() > 0
         np.testing.assert_allclose(cascade_intensities, dpd_intensities, rtol=1e-8)
+
+class TestPolarizedCascadeIntensity:
+    @pytest.fixture(scope="session")
+    def model(self, four_body_decay: Decay):
+        builder = CascadeAmplitudeBuilder(four_body_decay)
+        return builder.formulate(
+            reference_topology=((1, 3), (2, 4)),
+            polarized=True,
+        )
+
+    def test_intensity_is_matrix_sandwich(self, model):
+        assert isinstance(model.intensity, sp.Trace)
+        matrix_symbols = {str(s): s for s in model.matrices}
+        assert set(matrix_symbols) == {R"\rho", R"\overline{D}", "O"}
+        for symbol, matrix in model.matrices.items():
+            assert symbol.shape == (2, 2)
+            assert matrix.shape == (2, 2)
+
+    def test_decay_matrix_elements_sum_over_final_helicities(self, model):
+        elements = {
+            symbol: expression
+            for symbol, expression in model.amplitudes.items()
+            if str(symbol).startswith("O")
+        }
+        assert len(elements) == 3  # upper triangle of a Hermitian 2x2 matrix
+        for expression in elements.values():
+            assert isinstance(expression, PoolSum)
+            index_names = {str(symbol) for symbol, _ in expression.indices}
+            assert index_names == {"lambda1", "lambda2", "lambda3", "lambda4"}
+
+    def test_spin_density_defaults_are_unpolarized(self, model):
+        ρ = sp.IndexedBase(R"\rho")
+        half = sp.Rational(1, 2)
+        assert model.parameter_defaults[ρ[-half, -half]] == 1 / 2
+        assert model.parameter_defaults[ρ[-half, +half]] == 0
+        assert model.parameter_defaults[ρ[+half, +half]] == 1 / 2
+
+    def test_orientation_angles_point_to_reference_subsystem(self, model):
+        orientation = {
+            str(symbol): descriptor
+            for symbol, descriptor in model.kinematic_variables.items()
+            if isinstance(descriptor, OrientationAngle)
+        }
+        assert set(orientation) == {"phi", "theta", "chi"}
+        for descriptor in orientation.values():
+            assert descriptor.subsystem_ids == (1, 3)
+            assert descriptor.daughter_ids == (1,)
+
+    def test_reference_subsystem_can_be_overridden(self, four_body_decay: Decay):
+        builder = CascadeAmplitudeBuilder(four_body_decay)
+        model = builder.formulate(
+            reference_topology=((1, 3), (2, 4)),
+            polarized=True,
+            reference_subsystem=(2, 4),
+        )
+        descriptor = next(
+            descriptor
+            for descriptor in model.kinematic_variables.values()
+            if isinstance(descriptor, OrientationAngle)
+        )
+        assert descriptor.subsystem_ids == (2, 4)
+        assert descriptor.daughter_ids == (2,)
+
+    def test_invalid_reference_subsystem_raises(self, four_body_decay: Decay):
+        builder = CascadeAmplitudeBuilder(four_body_decay)
+        with pytest.raises(ValueError, match="not a composite node"):
+            builder.formulate(
+                reference_topology=((1, 3), (2, 4)),
+                polarized=True,
+                reference_subsystem=(1, 2),
+            )
+
+    def test_reference_subsystem_requires_polarized(self, four_body_decay: Decay):
+        builder = CascadeAmplitudeBuilder(four_body_decay)
+        with pytest.raises(ValueError, match="only be set for a polarized model"):
+            builder.formulate(reference_subsystem=(1, 3))
+
+
 
 
 def _formulate_chain_bw(chain: ThreeBodyDecayChain) -> DefinedExpression:

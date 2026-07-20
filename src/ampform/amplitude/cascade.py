@@ -35,7 +35,11 @@ from sympy.core.symbol import Str
 from sympy.physics.quantum.spin import Rotation as Wigner
 
 from ampform.amplitude.dpd import (
+    _create_conjugate_wigner_d_matrix,
+    _create_hermitian_matrix,
+    _create_unpolarized_spin_density,
     _formulate_clebsch_gordan_factors,
+    _formulate_decay_matrix_elements,
     create_mass_symbol_mapping,
 )
 from ampform.amplitude.helicity import (
@@ -134,7 +138,39 @@ class InvariantMass:
     state_ids: tuple[int, ...]
 
 
-KinematicVariable = HelicityAngle | WignerRotation | InvariantMass
+@frozen
+class OrientationAngle:
+    r"""Pointer to one of the Euler angles that orient the decay relative to the lab.
+
+    The orientation of the decay is defined by the **reference subsystem**
+    :math:`S_1` (`subsystem_ids`) and its first daughter :math:`S_2`
+    (`daughter_ids`), which together fix the plane of the 'first three-body decay' of
+    the reference topology. The Euler angles :math:`(\phi, \theta, \chi)` rotate the
+    **aligned frame**, in which :math:`\vec{p}_{S_1}` points along the :math:`z`-axis
+    and :math:`\vec{p}_{S_2}` lies in the :math:`xz`-half-plane, to the production
+    frame. Numerically, over four-momenta in the production frame:
+
+    - :math:`\phi = \operatorname{atan2}(p_{S_1}^y, p_{S_1}^x)`
+    - :math:`\theta = \arccos(p_{S_1}^z / |\vec{p}_{S_1}|)`
+    - :math:`\chi = \operatorname{atan2}(\tilde{p}_{S_2}^y, \tilde{p}_{S_2}^x)`, where
+      :math:`\tilde{p}_{S_2} = R_y(-\theta) R_z(-\phi)\, p_{S_2}` is the
+      :math:`S_2` momentum after rotating the :math:`S_1` momentum onto the
+      :math:`z`-axis.
+
+    The remaining kinematic variables of a polarized model (`HelicityAngle`,
+    `WignerRotation`) have to be computed over the **aligned momenta**
+    :math:`R_z(-\chi) R_y(-\theta) R_z(-\phi)\, p`, so that they parametrize only the
+    shape of the decay.
+    """
+
+    subsystem_ids: tuple[int, ...]
+    """Final states of the reference subsystem :math:`S_1`."""
+    daughter_ids: tuple[int, ...]
+    """Final states of the first daughter :math:`S_2` of the reference subsystem."""
+    angle: Literal["phi", "theta", "chi"]
+
+
+KinematicVariable = HelicityAngle | WignerRotation | InvariantMass | OrientationAngle
 """Descriptor for computing a kinematic variable of a cascade model numerically."""
 
 
@@ -152,18 +188,31 @@ class CascadeAmplitudeModel:
     None of these symbols have a symbolic definition: the helicity angles and Wigner
     rotations of a cascade decay cannot be expressed in terms of Mandelstam variables.
     Compute them numerically from four-momenta with the :code:`decayangle` package, as
-    described in `HelicityAngle`, `WignerRotation`, and `InvariantMass`.
+    described in `HelicityAngle`, `WignerRotation`, and `InvariantMass`. For a
+    polarized model, see `OrientationAngle` for which variables have to be computed
+    over aligned momenta.
     """
     parameter_defaults: ParameterValues = field(
         converter=_to_parameter_values,
         factory=dict,
     )
     masses: dict[sp.Symbol, float] = field(factory=dict)
+    matrices: dict[sp.MatrixSymbol, sp.ImmutableDenseMatrix] = field(factory=dict)
+    """Definitions of the `~sympy.matrices.expressions.MatrixSymbol` instances that
+    appear in the `intensity` of a polarized model (see
+    :meth:`.CascadeAmplitudeBuilder.formulate_polarized_intensity`)."""
 
     @property
     def full_expression(self) -> sp.Expr:
+        intensity = self.intensity
+        if self.matrices:
+            intensity = intensity.xreplace(self.matrices)
         evaluated_amplitudes = {k: v.doit() for k, v in self.amplitudes.items()}
-        return self.intensity.doit().xreplace(evaluated_amplitudes)
+        # the elements of the decay matrix O are defined in terms of the A^c symbols
+        evaluated_amplitudes = {
+            k: v.xreplace(evaluated_amplitudes) for k, v in evaluated_amplitudes.items()
+        }
+        return intensity.doit().xreplace(evaluated_amplitudes)
 
 
 class CascadeAmplitudeBuilder:
@@ -182,11 +231,13 @@ class CascadeAmplitudeBuilder:
         self.min_ls = min_ls
         self.dynamics_choices = ResonanceDynamicsConfigurator(decay)
 
-    def formulate(
+    def formulate(  # noqa: PLR0914
         self,
         reference_topology: TopologyTuple | DecayChain | None = None,
         *,
         cleanup_summations: bool = False,
+        polarized: bool = False,
+        reference_subsystem: tuple[int, ...] | None = None,
     ) -> CascadeAmplitudeModel:
         r"""Formulate the amplitude model given the configuration of this builder.
 
@@ -206,7 +257,20 @@ class CascadeAmplitudeBuilder:
                 decay. If `None`, the topology of the first chain is used.
             cleanup_summations: Whether to remove helicity indices from the summations
                 if their corresponding state is spinless.
+            polarized: Whether to formulate the intensity with a spin-density matrix
+                :math:`\rho` for the initial state (see
+                :meth:`formulate_polarized_intensity`). If `False`, the initial-state
+                spin projections are summed incoherently, which is equivalent to
+                integrating over the orientation of the decay ("unpolarized
+                intensity").
+            reference_subsystem: The subsystem that defines the orientation of the
+                decay in a polarized model (see :meth:`formulate_polarized_intensity`
+                and `OrientationAngle`). Only valid together with
+                :code:`polarized=True`.
         """
+        if reference_subsystem is not None and not polarized:
+            msg = "A reference subsystem can only be set for a polarized model"
+            raise ValueError(msg)
         reference_topology = self._get_reference_topology(reference_topology)
         state_ids = sorted(self.decay.final_state)
         helicity_symbols: tuple[sp.Symbol, ...] = sp.symbols(
@@ -231,12 +295,27 @@ class CascadeAmplitudeBuilder:
             topologies=tuple(topology_groups),
         )
         kinematic_variables.update(wigner_definitions)
-        intensity = PoolSum(
-            sp.Abs(aligned_amp) ** 2,
-            *allowed_helicities.items(),
-        )
-        if cleanup_summations:
-            intensity = intensity.cleanup()
+        matrices: dict[sp.MatrixSymbol, sp.ImmutableDenseMatrix] = {}
+        if polarized:
+            polarized_model = self.formulate_polarized_intensity(
+                helicity_symbols,
+                aligned_amp,
+                reference_topology,
+                reference_subsystem,
+                cleanup_summations=cleanup_summations,
+            )
+            intensity = polarized_model.intensity
+            matrices = polarized_model.matrices
+            amplitudes.update(polarized_model.amplitudes)
+            kinematic_variables.update(polarized_model.kinematic_variables)
+            parameter_defaults.update(polarized_model.parameter_defaults)
+        else:
+            intensity = PoolSum(
+                sp.Abs(aligned_amp) ** 2,
+                *allowed_helicities.items(),
+            )
+            if cleanup_summations:
+                intensity = intensity.cleanup()
         masses = create_mass_symbol_mapping(self.decay)
         parameter_defaults.update(masses)  # ty:ignore[no-matching-overload]
         return CascadeAmplitudeModel(
@@ -247,7 +326,126 @@ class CascadeAmplitudeBuilder:
             kinematic_variables=kinematic_variables,
             parameter_defaults=parameter_defaults,
             masses=masses,
+            matrices=matrices,
         )
+
+    def formulate_polarized_intensity(
+        self,
+        helicity_symbols: tuple[sp.Symbol, ...],
+        aligned_amplitude: sp.Expr,
+        reference_topology: TopologyTuple,
+        reference_subsystem: tuple[int, ...] | None = None,
+        *,
+        cleanup_summations: bool = False,
+    ) -> CascadeAmplitudeModel:
+        r"""Formulate an intensity with a spin-density matrix for the initial state.
+
+        Like :meth:`.DalitzPlotDecompositionBuilder.formulate_polarized_intensity`,
+        the differential decay rate over the decay-shape variables **and** the
+        orientation of the decay is formulated as a matrix expression
+
+        .. math::
+            I = \operatorname{tr}\left(
+                \rho \, \overline{D} \, O \, \overline{D}^\dagger
+            \right)\,,
+
+        with :math:`\rho` the spin-density matrix of the initial state in the
+        production frame, :math:`\overline{D}` the matrix of conjugated
+        Wigner-:math:`D` functions
+        :math:`\overline{D}_{m_0,\nu} = D^{j_0*}_{m_0,\nu}(\phi, \theta, \chi)` over
+        the Euler angles that orient the decay, and
+        :math:`O_{\nu,\nu'} = \sum_{\{\lambda\}} \mathcal{A}_{\nu,\{\lambda\}}
+        \mathcal{A}^*_{\nu',\{\lambda\}}` the spin-density matrix of the decay, built
+        from the aligned amplitudes of :meth:`formulate_aligned_amplitude`.
+
+        For :math:`n`-body decays, the orientation angles :math:`(\phi, \theta,
+        \chi)` are defined by a **reference subsystem**, which fixes the plane of the
+        first three-body decay of the reference topology (see `OrientationAngle`). By
+        default, this is the first daughter of the root node of the reference
+        topology. The elements of the decay matrix :math:`O` then have to be computed
+        over **aligned momenta**, i.e. four-momenta that are rotated such that the
+        reference-subsystem momentum points along the :math:`z`-axis and its first
+        daughter lies in the :math:`xz`-half-plane.
+        """
+        s1_ids, s2_ids = self._get_orientation_subsystems(
+            reference_topology, reference_subsystem
+        )
+        initial_state = self.decay.initial_state
+        projections = get_spin_projections(initial_state)
+        λ0, *final_symbols = helicity_symbols
+        state_ids = sorted(self.decay.final_state)
+        final_state_projections = {
+            symbol: get_spin_projections(self.decay.final_state[i])
+            for i, symbol in zip(state_ids, final_symbols, strict=True)
+        }
+        n = len(projections)
+        ρ_matrix = sp.MatrixSymbol(R"\rho", n, n)
+        d_matrix = sp.MatrixSymbol(R"\overline{D}", n, n)
+        o_matrix = sp.MatrixSymbol("O", n, n)
+        ρ_elements = sp.IndexedBase(R"\rho")
+        o_elements = sp.IndexedBase("O")
+        orientation_definitions: dict[sp.Symbol, KinematicVariable] = {
+            sp.Symbol(angle, real=True): OrientationAngle(s1_ids, s2_ids, angle)
+            for angle in ("phi", "theta", "chi")
+        }
+        return CascadeAmplitudeModel(
+            decay=self.decay,
+            reference_topology=reference_topology,
+            intensity=sp.Trace(ρ_matrix @ d_matrix @ o_matrix @ sp.Adjoint(d_matrix)),
+            amplitudes=_formulate_decay_matrix_elements(
+                o_elements,
+                aligned_amplitude,
+                λ0,
+                projections,
+                final_state_projections,
+                cleanup_summations=cleanup_summations,
+            ),
+            kinematic_variables=orientation_definitions,
+            parameter_defaults=_create_unpolarized_spin_density(
+                ρ_elements, projections
+            ),
+            matrices={
+                ρ_matrix: _create_hermitian_matrix(ρ_elements, projections),
+                d_matrix: _create_conjugate_wigner_d_matrix(
+                    sp.Rational(initial_state.spin), projections
+                ),
+                o_matrix: _create_hermitian_matrix(o_elements, projections),
+            },
+        )
+
+    @staticmethod
+    def _get_orientation_subsystems(
+        reference_topology: TopologyTuple,
+        reference_subsystem: tuple[int, ...] | None,
+    ) -> tuple[tuple[int, ...], tuple[int, ...]]:
+        """Determine the subsystems that define the orientation of the decay.
+
+        Returns the sorted final-state IDs of the reference subsystem and of its
+        first daughter within the reference topology.
+        """
+        composite_nodes = _collect_composite_nodes(reference_topology)
+        if reference_subsystem is None:
+            first_daughter = reference_topology[0]
+            if isinstance(first_daughter, int):
+                msg = (
+                    "The first daughter of the root node of reference topology"
+                    f" {reference_topology} is a single particle, which cannot define"
+                    " an orientation plane. Specify a composite reference_subsystem."
+                )
+                raise ValueError(msg)
+            node = first_daughter
+        else:
+            key = tuple(sorted(reference_subsystem))
+            if key not in composite_nodes:
+                subsystems = ", ".join(str(s) for s in sorted(composite_nodes))
+                msg = (
+                    f"Reference subsystem {reference_subsystem} is not a composite"
+                    f" node of reference topology {reference_topology}. Available"
+                    f" subsystems: {subsystems}"
+                )
+                raise ValueError(msg)
+            node = composite_nodes[key]
+        return _flatten_topology(node), _flatten_topology(node[0])
 
     def formulate_aligned_amplitude(
         self,
@@ -602,6 +800,39 @@ def _get_topology_label(topology: TopologyTuple | int) -> str:
         return "(" + "".join(render(child) for child in node) + ")"
 
     return "".join(render(child) for child in topology)
+
+
+def _flatten_topology(node: TopologyTuple | int) -> tuple[int, ...]:
+    """Get the sorted final-state IDs attached to a node of a topology descriptor.
+
+    >>> _flatten_topology(((1, 3), 2))
+    (1, 2, 3)
+    """
+    if isinstance(node, int):
+        return (node,)
+    return tuple(sorted(i for child in node for i in _flatten_topology(child)))
+
+
+def _collect_composite_nodes(
+    topology: TopologyTuple,
+) -> dict[tuple[int, ...], TopologyTuple]:
+    """Collect all composite nodes of a topology, except for the root node.
+
+    The root node is excluded since its momentum vanishes in the rest frame of the
+    initial state, so it cannot serve as a reference for the orientation of the decay.
+    """
+    nodes: dict[tuple[int, ...], TopologyTuple] = {}
+
+    def walk(node: TopologyTuple | int) -> None:
+        if isinstance(node, int):
+            return
+        nodes[_flatten_topology(node)] = node
+        for child in node:
+            walk(child)
+
+    for child in topology:
+        walk(child)
+    return nodes
 
 
 def _group_chains_by_topology(
