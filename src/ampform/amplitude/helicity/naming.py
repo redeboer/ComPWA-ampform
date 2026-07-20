@@ -484,8 +484,7 @@ def _get_parent_edge_ids(
 def get_helicity_suffix(topology: Topology | DecayChain, state_id: int) -> str:
     """Create an identifier suffix for a topology.
 
-    Used in :doc:`/amplitude/spin-alignment`. Comparable to
-    :func:`get_boost_chain_suffix`.
+    Comparable to :func:`get_boost_chain_suffix`.
     """
     superscript = get_topology_identifier(topology)
     return f"_{state_id}^{superscript}"

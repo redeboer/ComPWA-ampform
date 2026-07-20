@@ -7,12 +7,10 @@ import pytest
 import sympy as sp
 from sympy.printing.numpy import NumPyPrinter
 
-from ampform.adapter.transition import get_parent_id
 from ampform.kinematics.angles import (
     Phi,
     Theta,
     compute_helicity_angles,
-    compute_wigner_rotation_matrix,
     formulate_scattering_angle,
     formulate_theta_hat_angle,
     formulate_zeta_angle,
@@ -218,82 +216,6 @@ def test_compute_helicity_angles_of_decay_chain(double_cascade_chain: DecayChain
         "BoostZMatrix(EuclideanNorm(ThreeMomentum(p1 + p2))/Energy(p1 + p2),"
         " ArraySize(p1))"
     )
-
-
-@pytest.mark.parametrize(
-    ("state_id", "expected"),
-    [
-        (
-            0,
-            "MatrixMultiplication(BoostMatrix(NegativeMomentum(p0)), BoostMatrix(p0))",
-        ),
-        (
-            1,
-            (
-                "MatrixMultiplication(BoostMatrix(NegativeMomentum(p1)),"
-                " BoostMatrix(p1 + p2 + p3),"
-                " BoostMatrix(ArrayMultiplication(BoostMatrix(p1 + p2 + p3),"
-                " p1)))"
-            ),
-        ),
-        (
-            2,
-            (
-                "MatrixMultiplication(BoostMatrix(NegativeMomentum(p2)), BoostMatrix(p1"
-                " + p2 + p3), BoostMatrix(ArrayMultiplication(BoostMatrix(p1 + p2 +"
-                " p3), p2 + p3)),"
-                " BoostMatrix(ArrayMultiplication(BoostMatrix(ArrayMultiplication(BoostMatrix(p1"
-                " + p2 + p3), p2 + p3)), ArrayMultiplication(BoostMatrix(p1 + p2 + p3),"
-                " p2))))"
-            ),
-        ),
-        (
-            3,
-            (
-                "MatrixMultiplication(BoostMatrix(NegativeMomentum(p3)), BoostMatrix(p1"
-                " + p2 + p3), BoostMatrix(ArrayMultiplication(BoostMatrix(p1 + p2 +"
-                " p3), p2 + p3)),"
-                " BoostMatrix(ArrayMultiplication(BoostMatrix(ArrayMultiplication(BoostMatrix(p1"
-                " + p2 + p3), p2 + p3)), ArrayMultiplication(BoostMatrix(p1 + p2 + p3),"
-                " p3))))"
-            ),
-        ),
-    ],
-)
-def test_compute_wigner_rotation_matrix(
-    state_id: int,
-    expected: str,
-    topology_and_momentum_symbols: tuple[Topology, FourMomenta],
-):
-    topology, momenta = topology_and_momentum_symbols
-    expr = compute_wigner_rotation_matrix(topology, momenta, state_id)
-    assert str(expr) == expected
-
-
-@pytest.mark.parametrize(
-    "state_id",
-    [
-        0,
-        pytest.param(2, marks=pytest.mark.slow),
-        pytest.param(3, marks=pytest.mark.slow),
-    ],
-)
-def test_compute_wigner_rotation_matrix_numpy(
-    state_id: int,
-    data_sample: dict[int, np.ndarray],
-    topology_and_momentum_symbols: tuple[Topology, FourMomenta],
-):
-    topology, momenta = topology_and_momentum_symbols
-    expr = compute_wigner_rotation_matrix(topology, momenta, state_id)
-    func = sp.lambdify(momenta.values(), expr.doit(), cse=True)
-    momentum_array = data_sample[state_id]
-    wigner_matrix_array = func(*data_sample.values())
-    assert wigner_matrix_array.shape == (len(momentum_array), 4, 4)
-    if get_parent_id(topology, state_id) == -1:
-        product = np.einsum("...ij,...j->...j", wigner_matrix_array, momentum_array)
-        assert pytest.approx(product) == momentum_array
-    matrix_column_norms = np.linalg.norm(wigner_matrix_array, axis=1)
-    assert pytest.approx(matrix_column_norms) == 1
 
 
 def test_formulate_scattering_angle():

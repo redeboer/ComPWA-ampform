@@ -590,7 +590,11 @@ class BuilderConfiguration:
     """Configuration class for a `.HelicityAmplitudeBuilder`."""
 
     spin_alignment: SpinAlignment = field(validator=instance_of(SpinAlignment))
-    """Method for :doc:`aligning spin </amplitude/spin-alignment>`."""
+    """Method for aligning the spin of the final state across decay topologies.
+
+    Defaults to `.NoAlignment`. For three-body decays, amplitudes can be aligned
+    with `.DalitzPlotDecomposition`.
+    """
     scalar_initial_state_mass: bool = field(validator=instance_of(bool))
     r"""Add initial state mass as scalar value to `.HelicityModel.parameter_defaults`.
 

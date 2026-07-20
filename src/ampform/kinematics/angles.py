@@ -11,34 +11,22 @@ from ampform.adapter.transition import (
     get_sibling_state_id,
     is_opposite_helicity_state,
 )
-from ampform.amplitude.helicity.naming import (
-    get_helicity_angle_symbols,
-    get_helicity_suffix,
-)
+from ampform.amplitude.helicity.naming import get_helicity_angle_symbols
 from ampform.decay import DecayChain, IsobarNode, State, get_final_state_ids
 from ampform.kinematics.lorentz import (
     ArraySize,
-    BoostMatrix,
     BoostZMatrix,
     Energy,
-    FourMomenta,
     FourMomentumX,
     FourMomentumY,
     FourMomentumZ,
-    NegativeMomentum,
     RotationYMatrix,
     RotationZMatrix,
-    compute_boost_chain,
     three_momentum_norm,
 )
 from ampform.kinematics.phasespace import Kallen
 from ampform.sympy import unevaluated
-from ampform.sympy._array_expressions import (
-    ArrayMultiplication,
-    ArraySlice,
-    ArraySum,
-    MatrixMultiplication,
-)
+from ampform.sympy._array_expressions import ArrayMultiplication, ArraySum
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -235,46 +223,6 @@ def _compute_helicity_angles_of_chain(
 def _get_number_of_events(four_momenta: Mapping[int, sp.Expr]) -> ArraySize:
     sorted_momentum_symbols = sorted(four_momenta.values(), key=str)
     return ArraySize(sorted_momentum_symbols[0])
-
-
-def compute_wigner_angles(
-    topology: Topology, momenta: FourMomenta, state_id: int
-) -> dict[sp.Symbol, sp.Expr]:
-    """Create an `~sympy.core.expr.Expr` for each angle in a Wigner rotation.
-
-    Implementation of (B.2-4) in :cite:`Marangotto:2019ucc`, with :math:`x'_z` etc.
-    taken from the result of :func:`compute_wigner_rotation_matrix`. See also `Wigner
-    rotations <https://en.wikipedia.org/wiki/Wigner_rotation>`_.
-    """
-    wigner_rotation_matrix = compute_wigner_rotation_matrix(topology, momenta, state_id)
-    x_z = ArraySlice(wigner_rotation_matrix, (slice(None), 1, 3))
-    y_z = ArraySlice(wigner_rotation_matrix, (slice(None), 2, 3))
-    z_x = ArraySlice(wigner_rotation_matrix, (slice(None), 3, 1))
-    z_y = ArraySlice(wigner_rotation_matrix, (slice(None), 3, 2))
-    z_z = ArraySlice(wigner_rotation_matrix, (slice(None), 3, 3))
-    suffix = get_helicity_suffix(topology, state_id)
-    alpha, beta, gamma = sp.symbols(
-        f"alpha{suffix} beta{suffix} gamma{suffix}", real=True
-    )
-    return {
-        alpha: sp.atan2(z_y, z_x),
-        beta: sp.acos(z_z),
-        gamma: sp.atan2(y_z, -x_z),
-    }
-
-
-def compute_wigner_rotation_matrix(
-    topology: Topology, momenta: FourMomenta, state_id: int
-) -> MatrixMultiplication:
-    """Compute a Wigner rotation matrix.
-
-    Implementation of Eq. (36) in :cite:`Marangotto:2019ucc`. See also `Wigner rotations
-    <https://en.wikipedia.org/wiki/Wigner_rotation>`_.
-    """
-    momentum = momenta[state_id]
-    inverted_direct_boost = BoostMatrix(NegativeMomentum(momentum))
-    boost_chain = compute_boost_chain(topology, momenta, state_id)
-    return MatrixMultiplication(inverted_direct_boost, *boost_chain)
 
 
 def formulate_scattering_angle(
