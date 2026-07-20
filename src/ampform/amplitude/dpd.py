@@ -47,7 +47,7 @@ from ampform.kinematics.phasespace import compute_third_mandelstam
 from ampform.sympy import PoolSum
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Mapping
     from typing import Literal
 
 
@@ -123,6 +123,8 @@ class DalitzPlotDecompositionBuilder:
         cleanup_summations: bool = False,
         use_coefficients: bool = False,
         polarized: bool = False,
+        final_state_decays: Mapping[FinalStateID, tuple[Particle, Particle]]
+        | None = None,
     ) -> AmplitudeModel:
         r"""Formulate the amplitude model given the configuration of this builder.
 
@@ -139,6 +141,14 @@ class DalitzPlotDecompositionBuilder:
                 spin projections are summed incoherently, which is equivalent to
                 integrating over the orientation angles of the initial state
                 ("unpolarized intensity").
+            final_state_decays: Subsequent two-body decays of final-state particles
+                that act as polarimeters, given as a mapping of final-state IDs to
+                pairs of decay products. Each decay appends a Wigner-:math:`D` function
+                and a helicity coupling to the aligned amplitude (see
+                :func:`.attach_final_state_decays`). The helicity of the decaying
+                final-state particle is summed coherently and its summation in the
+                intensity is replaced by incoherent summations over the helicities of
+                its decay products.
         """
         if reference_subsystem is None:
             reference_subsystem = _get_best_reference_subsystems(self.decay)
@@ -176,6 +186,7 @@ class DalitzPlotDecompositionBuilder:
                 *helicity_symbols,
                 reference_subsystem,
                 cleanup_summations=cleanup_summations,
+                final_state_decays=final_state_decays,
             )
             intensity = polarized_model.intensity
             matrices = polarized_model.matrices
@@ -188,6 +199,17 @@ class DalitzPlotDecompositionBuilder:
                 reference_subsystem,
             )
             angle_definitions.update(zeta_defs)  # ty:ignore[no-matching-overload]
+            if final_state_decays:
+                aligned_amp, allowed_helicities, decay_couplings = (
+                    attach_final_state_decays(
+                        aligned_amp,
+                        helicity_symbols,
+                        allowed_helicities,
+                        final_state_decays,
+                        self.decay,
+                    )
+                )
+                parameter_defaults.update(decay_couplings)
             if cleanup_summations:
                 aligned_amp = aligned_amp.cleanup()
             intensity = PoolSum(
@@ -335,6 +357,8 @@ class DalitzPlotDecompositionBuilder:
         reference_subsystem: FinalStateID | None = None,
         *,
         cleanup_summations: bool = False,
+        final_state_decays: Mapping[FinalStateID, tuple[Particle, Particle]]
+        | None = None,
     ) -> AmplitudeModel:
         r"""Formulate an intensity with a spin-density matrix for the initial state.
 
@@ -371,14 +395,25 @@ class DalitzPlotDecompositionBuilder:
         aligned_amp, zeta_defs = self.formulate_aligned_amplitude(
             λ0, λ1, λ2, λ3, reference_subsystem
         )
-        if cleanup_summations:
-            aligned_amp = aligned_amp.cleanup()
         initial_state = self.decay.initial_state
         projections = get_spin_projections(initial_state)
         final_state_projections = {
             symbol: get_spin_projections(self.decay.final_state[i])
             for i, symbol in enumerate([λ1, λ2, λ3], start=1)
         }
+        decay_couplings: dict[sp.Basic, ParameterValue] = {}
+        if final_state_decays:
+            aligned_amp, final_state_projections, decay_couplings = (
+                attach_final_state_decays(
+                    aligned_amp,
+                    (λ0, λ1, λ2, λ3),
+                    final_state_projections,
+                    final_state_decays,
+                    self.decay,
+                )
+            )
+        if cleanup_summations:
+            aligned_amp = aligned_amp.cleanup()
         n = len(projections)
         ρ_matrix = sp.MatrixSymbol(R"\rho", n, n)
         d_matrix = sp.MatrixSymbol(R"\overline{D}", n, n)
@@ -397,9 +432,8 @@ class DalitzPlotDecompositionBuilder:
                 cleanup_summations=cleanup_summations,
             ),
             variables=zeta_defs,
-            parameter_defaults=_create_unpolarized_spin_density(
-                ρ_elements, projections
-            ),
+            parameter_defaults=_create_unpolarized_spin_density(ρ_elements, projections)
+            | decay_couplings,
             matrices={
                 ρ_matrix: _create_hermitian_matrix(ρ_elements, projections),
                 d_matrix: _create_conjugate_wigner_d_matrix(
@@ -486,6 +520,79 @@ def _create_unpolarized_spin_density(
                 continue
             defaults[ρ_elements[m, m_prime]] = 1 / n if i == j else 0j
     return defaults
+
+
+def attach_final_state_decays(
+    amplitude: PoolSum,
+    helicity_symbols: tuple[sp.Symbol, sp.Symbol, sp.Symbol, sp.Symbol],
+    projections: dict[sp.Symbol, list[sp.Rational]],
+    final_state_decays: Mapping[FinalStateID, tuple[Particle, Particle]],
+    decay: ThreeBodyDecay,
+) -> tuple[PoolSum, dict[sp.Symbol, list[sp.Rational]], dict[sp.Basic, ParameterValue]]:
+    r"""Attach two-body decays of final-state particles to an aligned amplitude.
+
+    For each final-state particle :math:`f` with spin :math:`j_f` that decays to two
+    particles :math:`p` and :math:`q`, the aligned amplitude
+    :math:`O^\nu_{\dots\lambda_f\dots}` is extended with a Wigner-:math:`D` function
+    and a helicity coupling for the decay node :math:`f \to p\,q`,
+
+    .. math::
+        \widetilde{O}^\nu_{\dots\lambda_p,\lambda_q\dots} = \sum_{\lambda_f}
+            O^\nu_{\dots\lambda_f\dots}\,
+            D^{j_f*}_{\lambda_f,\lambda_p-\lambda_q}\!\left(\phi_p, \theta_p, 0\right)
+            H^{f \to p,q}_{\lambda_p,\lambda_q}\,(-1)^{j_q-\lambda_q}\,,
+
+    following the same phase conventions as the isobar nodes of the
+    `.DalitzPlotDecompositionBuilder`. The helicity :math:`\lambda_f` is summed
+    coherently, while the helicities :math:`\lambda_p, \lambda_q` of the decay
+    products are to be summed incoherently: the entry for :math:`\lambda_f` in
+    :code:`projections` is replaced by entries for :math:`\lambda_p` and
+    :math:`\lambda_q`. The azimuthal and polar angles :math:`\phi_p, \theta_p` of
+    decay product :math:`p` must be measured in the **aligned** rest frame of
+    particle :math:`f` and remain free kinematic variables of the model. The helicity
+    couplings :math:`H^{f \to p,q}_{\lambda_p,\lambda_q}` default to :math:`1`. For a
+    parity-violating weak decay like :math:`\Sigma^+ \to p\pi^0`, they can be fixed
+    from the measured decay-asymmetry parameter :math:`\alpha` through
+    :math:`H_{\pm 1/2,0} = \sqrt{(1\pm\alpha)/2}`.
+
+    Returns:
+        A tuple of the extended amplitude, the updated mapping of helicity symbols to
+        allowed projections, and the parameter defaults for the new helicity couplings.
+    """
+    projections = dict(projections)
+    couplings: dict[sp.Basic, ParameterValue] = {}
+    for final_state_id, children in sorted(final_state_decays.items()):
+        parent = decay.final_state[final_state_id]
+        child1, child2 = children
+        if parent.spin + child1.spin + child2.spin < 2 * max(
+            child1.spin, child2.spin, parent.spin
+        ):
+            msg = (
+                f"Spins of decay {parent.name} → {child1.name} {child2.name} cannot"
+                " be coupled"
+            )
+            raise ValueError(msg)
+        λf = helicity_symbols[final_state_id]
+        λp = sp.Symbol(Rf"\lambda_{{{child1.latex}}}", rational=True)
+        λq = sp.Symbol(Rf"\lambda_{{{child2.latex}}}", rational=True)
+        φ = sp.Symbol(Rf"\phi_{{{child1.latex}}}", real=True)
+        θ = sp.Symbol(Rf"\theta_{{{child1.latex}}}", real=True)
+        coupling_base = _get_coupling_base(helicity_basis=True, typ="decay")
+        resonance = Str(parent.latex)
+        amplitude = PoolSum(
+            amplitude
+            * sp.conjugate(Wigner.D(sp.Rational(parent.spin), λf, λp - λq, φ, θ, 0))
+            * coupling_base[resonance, λp, λq]
+            * (-1) ** (sp.Rational(child2.spin) - λq),
+            (λf, projections.pop(λf)),
+        )
+        projections[λp] = get_spin_projections(child1)
+        projections[λq] = get_spin_projections(child2)
+        for λp_val in projections[λp]:
+            for λq_val in projections[λq]:
+                if abs(λp_val - λq_val) <= parent.spin:
+                    couplings[coupling_base[resonance, λp_val, λq_val]] = 1 + 0j
+    return amplitude, projections, couplings
 
 
 def _product(obj: Any | Iterable):

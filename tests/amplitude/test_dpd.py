@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytest
 import qrules
 import sympy as sp
@@ -267,8 +268,155 @@ class TestPolarizedIntensity:
         assert len({round(i, 7) for i in intensities}) == len(intensities)
 
 
+class TestFinalStateDecays:
+    """Test attaching a polarimeter decay Σ⁺ → p π⁰ to the final state."""
+
+    @pytest.fixture(scope="session")
+    def models(
+        self, jpsi2pksigma_reaction: ReactionInfo
+    ) -> tuple[AmplitudeModel, AmplitudeModel]:
+        if jpsi2pksigma_reaction.formalism != "helicity":
+            pytest.skip("Final-state decays are tested in the helicity basis only")
+        transitions = normalize_state_ids(jpsi2pksigma_reaction.transitions)
+        decay = to_three_body_decay(transitions, min_ls=True)
+        builder = DalitzPlotDecompositionBuilder(decay, min_ls=True)
+        without_decay = builder.formulate(reference_subsystem=2)
+        with_decay = builder.formulate(
+            reference_subsystem=2,
+            final_state_decays={2: _create_sigma_decay_products()},
+        )
+        return without_decay, with_decay
+
+    def test_summation_indices_replaced_by_decay_products(
+        self, models: tuple[AmplitudeModel, AmplitudeModel]
+    ):
+        _, model = models
+        intensity = model.intensity
+        assert isinstance(intensity, PoolSum)
+        helicity_ranges = {str(symbol): values for symbol, values in intensity.indices}
+        assert helicity_ranges == {
+            "lambda0": (-1, 0, 1),
+            "lambda1": (0,),
+            "lambda3": (-sp.Rational(1, 2), +sp.Rational(1, 2)),
+            R"\lambda_{p}": (-sp.Rational(1, 2), +sp.Rational(1, 2)),
+            R"\lambda_{\pi^0}": (0,),
+        }
+
+    def test_decay_couplings_have_default_parameters(
+        self, models: tuple[AmplitudeModel, AmplitudeModel]
+    ):
+        _, model = models
+        couplings = _get_sigma_decay_couplings(model)
+        assert len(couplings) == 2
+        assert all(model.parameter_defaults[c] == 1 + 0j for c in couplings)
+
+    def test_polarized_intensity_sums_over_decay_products(
+        self, jpsi2pksigma_reaction: ReactionInfo
+    ):
+        if jpsi2pksigma_reaction.formalism != "helicity":
+            pytest.skip("Final-state decays are tested in the helicity basis only")
+        transitions = normalize_state_ids(jpsi2pksigma_reaction.transitions)
+        decay = to_three_body_decay(transitions, min_ls=True)
+        builder = DalitzPlotDecompositionBuilder(decay, min_ls=True)
+        model = builder.formulate(
+            reference_subsystem=2,
+            polarized=True,
+            final_state_decays={2: _create_sigma_decay_products()},
+        )
+        matrix_element = next(
+            expr
+            for symbol, expr in model.amplitudes.items()
+            if str(symbol).startswith("O")
+        )
+        assert isinstance(matrix_element, PoolSum)
+        index_names = {str(symbol) for symbol, _ in matrix_element.indices}
+        assert index_names == {
+            "lambda1",
+            "lambda3",
+            R"\lambda_{p}",
+            R"\lambda_{\pi^0}",
+        }
+
+    def test_impossible_spin_coupling_raises(self, jpsi2pksigma_reaction: ReactionInfo):
+        if jpsi2pksigma_reaction.formalism != "helicity":
+            pytest.skip("Final-state decays are tested in the helicity basis only")
+        transitions = normalize_state_ids(jpsi2pksigma_reaction.transitions)
+        decay = to_three_body_decay(transitions, min_ls=True)
+        builder = DalitzPlotDecompositionBuilder(decay, min_ls=True)
+        proton, pion = _create_sigma_decay_products()
+        with pytest.raises(ValueError, match="cannot be coupled"):
+            builder.formulate(
+                reference_subsystem=2,
+                final_state_decays={1: (proton, pion)},  # K0 → p π0 is impossible
+            )
+
+    @pytest.mark.slow
+    def test_intensity_integrates_to_two_pi_times_undecayed(
+        self, models: tuple[AmplitudeModel, AmplitudeModel]
+    ):
+        """Check the normalization :math:`\\int I \\, d\\Omega_p = 2\\pi I_0`.
+
+        The couplings for the weak decay Σ⁺ → p π⁰ are fixed from the decay-asymmetry
+        parameter alpha through :math:`H_{\\pm 1/2} = \\sqrt{(1 \\pm \\alpha)/2}`, so that
+        :math:`\\sum_{\\lambda_p} |H_{\\lambda_p}|^2 = 1`.
+        """
+        without_decay, with_decay = models
+        asymmetric_couplings: dict[sp.Basic, complex] = {
+            symbol: 0.7 * np.exp(0.9j) if ", 1/2," in str(symbol) else 1
+            for symbol in with_decay.parameter_defaults
+            if str(symbol).startswith(R"\mathcal{H}^\mathrm{production}")
+        }
+        α = -0.98
+        h_minus, h_plus = _get_sigma_decay_couplings(with_decay)
+        weak_couplings = {
+            h_plus: np.sqrt((1 + α) / 2),
+            h_minus: np.sqrt((1 - α) / 2),
+        }
+        f_undecayed = _lambdify_over_mandelstam_and_orientation(
+            without_decay, asymmetric_couplings, orientation_symbols=()
+        )
+        f_decayed = _lambdify_over_mandelstam_and_orientation(
+            with_decay,
+            asymmetric_couplings | weak_couplings,
+            orientation_symbols=(R"\phi_{p}", R"\theta_{p}"),
+        )
+        σ1, σ2 = 5.63, 2.7  # inside phase space
+        intensity_undecayed = f_undecayed(σ1, σ2).real
+        φ_values = np.linspace(0, 2 * np.pi, num=64, endpoint=False)
+        cos_θ_values, weights = np.polynomial.legendre.leggauss(deg=20)
+        θ_values = np.arccos(cos_θ_values)
+        intensities = np.array([
+            [f_decayed(σ1, σ2, φ, θ).real for θ in θ_values] for φ in φ_values
+        ])
+        # the integrand is a trigonometric polynomial in φ and, after φ-integration,
+        # polynomial in cos(θ), so these quadratures are exact
+        integral = (2 * np.pi / len(φ_values)) * np.sum(
+            intensities.sum(axis=0) * weights
+        )
+        assert integral == pytest.approx(2 * np.pi * intensity_undecayed)
+
+
+def _create_sigma_decay_products() -> tuple[Particle, Particle]:
+    proton = Particle("p", latex="p", spin=0.5, parity=+1, mass=0.938, width=0.0)
+    pion = Particle("pi0", latex=R"\pi^0", spin=0, parity=-1, mass=0.135, width=0.0)
+    return proton, pion
+
+
+def _get_sigma_decay_couplings(model: AmplitudeModel) -> list[sp.Basic]:
+    return sorted(
+        (
+            symbol
+            for symbol in model.parameter_defaults
+            if str(symbol).startswith(R"\mathcal{H}^\mathrm{decay}[\Sigma^{+}")
+        ),
+        key=str,
+    )
+
+
 def _lambdify_over_mandelstam_and_orientation(
-    model: AmplitudeModel, parameters: dict[sp.Basic, complex] | None = None
+    model: AmplitudeModel,
+    parameters: dict[sp.Basic, complex] | None = None,
+    orientation_symbols: tuple[str, ...] = ("phi", "theta", "chi"),
 ):
     substitutions = dict(model.parameter_defaults)
     if parameters is not None:
@@ -283,7 +431,7 @@ def _lambdify_over_mandelstam_and_orientation(
     expr = expr.xreplace(kinematic_definitions).xreplace({σ3: σ3_expr})
     expr = expr.xreplace(model.masses)
     σ1, σ2 = sp.symbols("sigma1 sigma2", nonnegative=True)
-    orientation = sp.symbols("phi theta chi", real=True)
+    orientation = tuple(sp.Symbol(s, real=True) for s in orientation_symbols)
     func = sp.lambdify([σ1, σ2, *orientation], expr, "numpy")
     return lambda *args: complex(func(*args))
 
