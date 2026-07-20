@@ -243,6 +243,7 @@
     "cbar",
     "charmness",
     "clebsch",
+    "coherences",
     "combi",
     "conda",
     "dalitz",
@@ -297,6 +298,7 @@
     "qrules",
     "quadax",
     "rsplit",
+    "rtol",
     "Schwarz",
     "SciPy",
     "setuptools",
@@ -314,6 +316,7 @@
     "vectorizing",
     "venv",
     "weisskopf",
+    "xticklabels",
     "yticklabels",
     "Zenodo",
     "zorder"
