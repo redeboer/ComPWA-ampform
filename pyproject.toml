@@ -92,9 +92,11 @@ jupyter = [
 notebooks = [
     "ampform[scipy,viz]",
     "black",
+    "decayangle <1.1.3",
     "ipympl",
     "matplotlib",
     "numpy",
+    "phasespace",
     "quadax",
     "rich",
     "sympy-plot-backends",
