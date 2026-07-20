@@ -68,7 +68,7 @@ sorted tuple of the final-state IDs it decays into.
 TopologyTuple = tuple
 """Nested-tuple descriptor of a decay topology, as used by :code:`decayangle`.
 
-Can be passed directly to :class:`decayangle.decay_topology.Topology` as
+Can be passed directly to :code:`decayangle`'s :code:`Topology` class as
 :code:`Topology(0, decay_topology=<tuple>)`. See :func:`to_topology`.
 """
 
